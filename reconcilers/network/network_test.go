@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/juan-lee/genesys/bootstrap/network"
+	"github.com/juan-lee/genesys/reconcilers/network"
 )
 
 func TestValidParameters(t *testing.T) {
@@ -43,7 +43,7 @@ func TestValidParameters(t *testing.T) {
 				t.Errorf("expected net to be non-nil")
 			}
 
-			err = net.Bootstrap(context.TODO(), v.opt)
+			err = net.Reconcile(context.TODO(), v.opt)
 			if err.Error() != v.expected {
 				t.Errorf("expected [%s] : actual [%s]", v.expected, err.Error())
 			}

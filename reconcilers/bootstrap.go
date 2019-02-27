@@ -12,16 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package network
-
-import "context"
-
-type fakeVNetBootstrapper struct{}
-
-func ProvideFakeVirtualNetwork() VNetProvider {
-	return &fakeVNetBootstrapper{}
-}
-
-func (r fakeVNetBootstrapper) Bootstrap(ctx context.Context, opt *VNetOptions) error {
-	return nil
-}
+package reconcilers

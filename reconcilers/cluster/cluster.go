@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
-
-package bootstrap
+package cluster
 
 import (
 	"context"
 
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/bootstrap/cluster"
-	"github.com/juan-lee/genesys/bootstrap/network"
+	"github.com/juan-lee/genesys/reconcilers/network"
 )
 
-func InjectFakeSelfManaged(ctx context.Context) (*cluster.Bootstrapper, error) {
-	panic(wire.Build(
-		network.ProvideFakeVirtualNetwork,
-		network.ProvideBaseNetwork,
-		cluster.ProvideSelfManaged,
-	))
+type Reconciler struct {
+	net network.BaseNetworkProvider
+}
+
+func ProvideSelfManaged(net network.BaseNetworkProvider) *Reconciler {
+	return &Reconciler{
+		net: net,
+	}
+}
+
+func (r Reconciler) Reconcile(ctx context.Context) error {
+	return r.net.Reconcile(ctx, &network.BaseNetworkOptions{})
 }

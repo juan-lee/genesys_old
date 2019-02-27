@@ -12,5 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package cluster provides bootstrappers for various kinds of kubernetes clusters
-package cluster
+package network
+
+import "context"
+
+type fakeVNetReconciler struct{}
+
+func ProvideFakeVirtualNetwork() VNetProvider {
+	return &fakeVNetReconciler{}
+}
+
+func (r fakeVNetReconciler) Reconcile(ctx context.Context, opt *VNetOptions) error {
+	return nil
+}

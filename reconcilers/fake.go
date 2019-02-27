@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bootstrap
+package reconcilers
 
 import (
 	"context"
 
-	"github.com/juan-lee/genesys/bootstrap/cluster"
+	"github.com/juan-lee/genesys/reconcilers/cluster"
 )
 
-func NewFakeSelfManagedCluster() (*cluster.Bootstrapper, error) {
+func NewFakeSelfManagedCluster() (*cluster.Reconciler, error) {
 	return InjectFakeSelfManaged(context.TODO())
 }

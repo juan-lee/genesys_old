@@ -12,6 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
-
-package bootstrap
+// Package cluster provides reconcilers for various kinds of kubernetes clusters
+package cluster

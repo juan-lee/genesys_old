@@ -30,9 +30,9 @@ type VNetOptions struct {
 }
 
 type VNetProvider interface {
-	Bootstrap(ctx context.Context, opt *VNetOptions) error
+	Reconcile(ctx context.Context, opt *VNetOptions) error
 }
 
 type BaseNetworkProvider interface {
-	Bootstrap(ctx context.Context, opt *BaseNetworkOptions) error
+	Reconcile(ctx context.Context, opt *BaseNetworkOptions) error
 }

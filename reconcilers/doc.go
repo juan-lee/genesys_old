@@ -12,24 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cluster
-
-import (
-	"context"
-
-	"github.com/juan-lee/genesys/bootstrap/network"
-)
-
-type Bootstrapper struct {
-	net network.BaseNetworkProvider
-}
-
-func ProvideSelfManaged(net network.BaseNetworkProvider) *Bootstrapper {
-	return &Bootstrapper{
-		net: net,
-	}
-}
-
-func (r Bootstrapper) Bootstrap(ctx context.Context) error {
-	return r.net.Bootstrap(ctx, &network.BaseNetworkOptions{})
-}
+// Package reconcilers provides reconcilers for various kubernetes configurations
+package reconcilers

@@ -18,12 +18,12 @@ import (
 	"context"
 )
 
-type vnetBootstrapper struct{}
+type vnetReconciler struct{}
 
-func ProvideVirtualNetwork() *vnetBootstrapper {
-	return &vnetBootstrapper{}
+func ProvideVirtualNetwork() *vnetReconciler {
+	return &vnetReconciler{}
 }
 
-func (r vnetBootstrapper) Bootstrap(ctx context.Context, opt *VNetOptions) error {
+func (r vnetReconciler) Reconcile(ctx context.Context, opt *VNetOptions) error {
 	return nil
 }

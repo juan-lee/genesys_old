@@ -12,21 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bootstrap_test
+// +build wireinject
 
-import (
-	"testing"
-
-	"github.com/juan-lee/genesys/bootstrap"
-)
-
-func TestCluster(t *testing.T) {
-	b, err := bootstrap.NewFakeSelfManagedCluster()
-	if err != nil {
-		t.Error(err)
-	}
-
-	if b == nil {
-		t.Errorf("expected b to be non-nil")
-	}
-}
+package reconcilers

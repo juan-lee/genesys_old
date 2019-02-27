@@ -12,5 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package network provides bootstrappers for various kubernetes network configurations
-package network
+package reconcilers_test
+
+import (
+	"testing"
+
+	"github.com/juan-lee/genesys/reconcilers"
+)
+
+func TestCluster(t *testing.T) {
+	b, err := reconcilers.NewFakeSelfManagedCluster()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if b == nil {
+		t.Errorf("expected b to be non-nil")
+	}
+}

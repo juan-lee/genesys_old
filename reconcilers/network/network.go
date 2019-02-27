@@ -30,13 +30,13 @@ func ProvideBaseNetwork(vnet VNetProvider) BaseNetworkProvider {
 	}
 }
 
-// Bootstrap provisions base networking for a kubernetes cluster
-func (n BaseNetwork) Bootstrap(ctx context.Context, opt *BaseNetworkOptions) error {
+// Reconcile provisions base networking for a kubernetes cluster
+func (n BaseNetwork) Reconcile(ctx context.Context, opt *BaseNetworkOptions) error {
 	err := n.validate(opt)
 	if err != nil {
 		return err
 	}
-	return n.vnet.Bootstrap(ctx, &opt.VNet)
+	return n.vnet.Reconcile(ctx, &opt.VNet)
 }
 
 func (n BaseNetwork) validate(opt *BaseNetworkOptions) error {
