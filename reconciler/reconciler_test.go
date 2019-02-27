@@ -12,6 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
+package reconciler_test
 
-package reconcilers
+import (
+	"testing"
+
+	"github.com/juan-lee/genesys/reconciler"
+)
+
+func TestCluster(t *testing.T) {
+	b, err := reconciler.NewFakeSelfManagedCluster()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if b == nil {
+		t.Errorf("expected b to be non-nil")
+	}
+}

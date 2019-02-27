@@ -12,14 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilers
-
-import (
-	"context"
-
-	"github.com/juan-lee/genesys/reconcilers/cluster"
-)
-
-func NewFakeSelfManagedCluster() (*cluster.Reconciler, error) {
-	return InjectFakeSelfManaged(context.TODO())
-}
+// Package reconciler provides reconcilers for various kubernetes configurations
+package reconciler

@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilers_test
+package cluster
 
 import (
-	"testing"
+	"context"
 
-	"github.com/juan-lee/genesys/reconcilers"
+	"github.com/juan-lee/genesys/reconciler/network"
 )
 
-func TestCluster(t *testing.T) {
-	b, err := reconcilers.NewFakeSelfManagedCluster()
-	if err != nil {
-		t.Error(err)
-	}
+type Reconciler struct {
+	net network.BaseNetworkProvider
+}
 
-	if b == nil {
-		t.Errorf("expected b to be non-nil")
+func ProvideSelfManaged(net network.BaseNetworkProvider) *Reconciler {
+	return &Reconciler{
+		net: net,
 	}
+}
+
+func (r Reconciler) Reconcile(ctx context.Context) error {
+	return r.net.Reconcile(ctx, &network.BaseNetworkOptions{})
 }

@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/juan-lee/genesys/reconcilers/network"
+	"github.com/juan-lee/genesys/reconciler/network"
 )
 
 func TestValidParameters(t *testing.T) {

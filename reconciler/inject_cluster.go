@@ -12,24 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cluster
+// +build wireinject
 
-import (
-	"context"
-
-	"github.com/juan-lee/genesys/reconcilers/network"
-)
-
-type Reconciler struct {
-	net network.BaseNetworkProvider
-}
-
-func ProvideSelfManaged(net network.BaseNetworkProvider) *Reconciler {
-	return &Reconciler{
-		net: net,
-	}
-}
-
-func (r Reconciler) Reconcile(ctx context.Context) error {
-	return r.net.Reconcile(ctx, &network.BaseNetworkOptions{})
-}
+package reconciler

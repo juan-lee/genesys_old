@@ -12,4 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconcilers
+package reconciler
+
+import (
+	"context"
+
+	"github.com/juan-lee/genesys/reconciler/cluster"
+)
+
+func NewFakeSelfManagedCluster() (*cluster.Reconciler, error) {
+	return InjectFakeSelfManaged(context.TODO())
+}

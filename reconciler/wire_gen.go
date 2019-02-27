@@ -3,12 +3,12 @@
 //go:generate wire
 //+build !wireinject
 
-package reconcilers
+package reconciler
 
 import (
 	"context"
-	"github.com/juan-lee/genesys/reconcilers/cluster"
-	"github.com/juan-lee/genesys/reconcilers/network"
+	"github.com/juan-lee/genesys/reconciler/cluster"
+	"github.com/juan-lee/genesys/reconciler/network"
 )
 
 // Injectors from inject_fakes.go:
