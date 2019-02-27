@@ -16,14 +16,20 @@ package cluster
 
 import (
 	"context"
+
+	"github.com/juan-lee/genesys/bootstrap/network"
 )
 
-type Bootstrapper struct{}
+type Bootstrapper struct {
+	net network.BaseNetworkProvider
+}
 
-func ProvideBootstrapper() *Bootstrapper {
-	return &Bootstrapper{}
+func ProvideSelfManaged(net network.BaseNetworkProvider) *Bootstrapper {
+	return &Bootstrapper{
+		net: net,
+	}
 }
 
 func (r Bootstrapper) Bootstrap(ctx context.Context) error {
-	return nil
+	return r.net.Bootstrap(ctx, &network.BaseNetworkOptions{})
 }

@@ -12,4 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bootstrap
+package network
+
+import "fmt"
+
+// ErrInvalid records an invalid argument error
+type ErrInvalid struct {
+	arg string
+	msg string
+}
+
+func NewInvalidArgumentError(name, msg string) error {
+	return &ErrInvalid{arg: name, msg: msg}
+}
+
+func (e *ErrInvalid) Error() string {
+	return fmt.Sprintf("%s is invalid : %s", e.arg, e.msg)
+}

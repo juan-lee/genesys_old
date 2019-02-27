@@ -8,11 +8,14 @@ package bootstrap
 import (
 	"context"
 	"github.com/juan-lee/genesys/bootstrap/cluster"
+	"github.com/juan-lee/genesys/bootstrap/network"
 )
 
-// Injectors from wire.go:
+// Injectors from inject_fakes.go:
 
-func initializeTestCluster(ctx context.Context) (*cluster.Bootstrapper, error) {
-	bootstrapper := cluster.ProvideBootstrapper()
+func InjectFakeSelfManaged(ctx context.Context) (*cluster.Bootstrapper, error) {
+	vNetProvider := network.ProvideFakeVirtualNetwork()
+	baseNetworkProvider := network.ProvideBaseNetwork(vNetProvider)
+	bootstrapper := cluster.ProvideSelfManaged(baseNetworkProvider)
 	return bootstrapper, nil
 }

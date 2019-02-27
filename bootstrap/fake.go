@@ -13,3 +13,13 @@
 // limitations under the License.
 
 package bootstrap
+
+import (
+	"context"
+
+	"github.com/juan-lee/genesys/bootstrap/cluster"
+)
+
+func NewFakeSelfManagedCluster() (*cluster.Bootstrapper, error) {
+	return InjectFakeSelfManaged(context.TODO())
+}

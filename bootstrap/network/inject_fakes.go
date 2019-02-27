@@ -12,4 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bootstrap
+// +build wireinject
+
+package network
+
+import (
+	"context"
+
+	"github.com/google/wire"
+)
+
+func InjectFakeBaseNetwork(ctx context.Context) (BaseNetworkProvider, error) {
+	panic(wire.Build(
+		ProvideFakeVirtualNetwork,
+		ProvideBaseNetwork,
+	))
+}

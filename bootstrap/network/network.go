@@ -18,12 +18,36 @@ import (
 	"context"
 )
 
-type Bootstrapper struct{}
-
-func ProvideBootstrapper() *Bootstrapper {
-	return &Bootstrapper{}
+// BaseNetwork provides reconcilers for various kubernetes configurations
+type BaseNetwork struct {
+	vnet VNetProvider
 }
 
-func (r Bootstrapper) Bootstrap(ctx context.Context) error {
+// ProvideBaseNetwork provides an instance of a base networking reconciler
+func ProvideBaseNetwork(vnet VNetProvider) BaseNetworkProvider {
+	return &BaseNetwork{
+		vnet: vnet,
+	}
+}
+
+// Bootstrap provisions base networking for a kubernetes cluster
+func (n BaseNetwork) Bootstrap(ctx context.Context, opt *BaseNetworkOptions) error {
+	err := n.validate(opt)
+	if err != nil {
+		return err
+	}
+	return n.vnet.Bootstrap(ctx, &opt.VNet)
+}
+
+func (n BaseNetwork) validate(opt *BaseNetworkOptions) error {
+	if opt == nil {
+		return NewInvalidArgumentError("opt", "can't be nil")
+	}
+	if opt.ResourceGroup == "" {
+		return NewInvalidArgumentError("ResourceGroup", "can't be empty")
+	}
+	if opt.Location == "" {
+		return NewInvalidArgumentError("Location", "can't be empty")
+	}
 	return nil
 }

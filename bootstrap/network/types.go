@@ -12,4 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bootstrap
+package network
+
+import (
+	"context"
+)
+
+type BaseNetworkOptions struct {
+	ResourceGroup string
+	Location      string
+	VNet          VNetOptions
+}
+
+type VNetOptions struct {
+	Name         string
+	AddressSpace string
+}
+
+type VNetProvider interface {
+	Bootstrap(ctx context.Context, opt *VNetOptions) error
+}
+
+type BaseNetworkProvider interface {
+	Bootstrap(ctx context.Context, opt *BaseNetworkOptions) error
+}

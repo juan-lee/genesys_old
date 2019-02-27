@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
-
-package bootstrap
+package network
 
 import (
 	"context"
-
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/bootstrap/cluster"
 )
 
-func initializeTestCluster(ctx context.Context) (*cluster.Bootstrapper, error) {
-	panic(wire.Build(cluster.ProvideBootstrapper))
+type vnetBootstrapper struct{}
+
+func ProvideVirtualNetwork() *vnetBootstrapper {
+	return &vnetBootstrapper{}
+}
+
+func (r vnetBootstrapper) Bootstrap(ctx context.Context, opt *VNetOptions) error {
+	return nil
 }

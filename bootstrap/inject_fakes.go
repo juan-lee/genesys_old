@@ -12,4 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build wireinject
+
 package bootstrap
+
+import (
+	"context"
+
+	"github.com/google/wire"
+	"github.com/juan-lee/genesys/bootstrap/cluster"
+	"github.com/juan-lee/genesys/bootstrap/network"
+)
+
+func InjectFakeSelfManaged(ctx context.Context) (*cluster.Bootstrapper, error) {
+	panic(wire.Build(
+		network.ProvideFakeVirtualNetwork,
+		network.ProvideBaseNetwork,
+		cluster.ProvideSelfManaged,
+	))
+}

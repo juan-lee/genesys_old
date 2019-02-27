@@ -21,7 +21,7 @@ import (
 )
 
 func TestCluster(t *testing.T) {
-	b, err := bootstrap.NewTestCluster()
+	b, err := bootstrap.NewFakeSelfManagedCluster()
 	if err != nil {
 		t.Error(err)
 	}

@@ -12,17 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
-
-package bootstrap_test
-
-import (
-	"context"
-
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/bootstrap/cluster"
-)
-
-func initializeSelfManaged(ctx context.Context) (*cluster.Bootstrapper, error) {
-	panic(wire.Build(cluster.ProvideBootstrapper))
-}
+package cluster
