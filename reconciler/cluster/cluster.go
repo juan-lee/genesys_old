@@ -31,5 +31,5 @@ func ProvideSelfManaged(net network.Reconciler) *Reconciler {
 }
 
 func (r Reconciler) Reconcile(ctx context.Context) error {
-	return r.net.Reconcile(ctx, &network.NetworkOptions{})
+	return r.net.Reconcile(ctx, &network.Options{})
 }

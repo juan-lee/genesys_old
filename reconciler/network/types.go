@@ -18,27 +18,32 @@ import (
 	"context"
 )
 
-type NetworkOptions struct {
+// Options for kubernetes clusters
+type Options struct {
 	ResourceGroup string
 	Location      string
 	VNet          VNetOptions
 }
 
+// Subnet configuration for kubernetes clusters
 type Subnet struct {
 	Name         string
 	AddressSpace string
 }
 
+// VNetOptions for kubernetes clusters
 type VNetOptions struct {
 	Name         string
 	AddressSpace string
 	Subnets      []Subnet
 }
 
+// VNetReconciler provides an interface for reconciling vnets
 type VNetReconciler interface {
 	Reconcile(ctx context.Context, opt *VNetOptions) error
 }
 
+// Reconciler provides an interface for reconciling networks for kubernetes
 type Reconciler interface {
-	Reconcile(ctx context.Context, opt *NetworkOptions) error
+	Reconcile(ctx context.Context, opt *Options) error
 }

@@ -18,6 +18,7 @@ import "context"
 
 type fakeVNetProvider struct{}
 
+// ProvideFakeVirtualNetwork provides a fake vnet reconciler for testing
 func ProvideFakeVirtualNetwork() VNetReconciler {
 	return fakeVNetProvider{}
 }

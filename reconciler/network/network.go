@@ -30,7 +30,7 @@ func ProvideReconciler(vnet VNetReconciler) Reconciler {
 }
 
 // Reconcile provisions base networking for a kubernetes cluster
-func (r reconciler) Reconcile(ctx context.Context, opt *NetworkOptions) error {
+func (r reconciler) Reconcile(ctx context.Context, opt *Options) error {
 	err := r.validate(opt)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (r reconciler) Reconcile(ctx context.Context, opt *NetworkOptions) error {
 	return r.vnet.Reconcile(ctx, &opt.VNet)
 }
 
-func (r reconciler) validate(opt *NetworkOptions) error {
+func (r reconciler) validate(opt *Options) error {
 	if opt == nil {
 		return NewInvalidArgumentError("opt", "can't be nil")
 	}

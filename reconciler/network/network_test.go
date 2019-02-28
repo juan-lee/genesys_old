@@ -23,21 +23,21 @@ import (
 
 func TestValidParameters(t *testing.T) {
 	var variations = []struct {
-		opt      *network.NetworkOptions
+		opt      *network.Options
 		expected error
 	}{
 		{nil, network.NewInvalidArgumentError("opt", "can't be nil")},
-		{&network.NetworkOptions{}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
-		{&network.NetworkOptions{ResourceGroup: "rg"}, network.NewInvalidArgumentError("Location", "can't be empty")},
-		{&network.NetworkOptions{Location: "westus"}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
-		{newValidNetworkOptions(&network.VNetOptions{}), network.NewInvalidArgumentError("Name", "can't be empty")},
-		{newValidNetworkOptions(&network.VNetOptions{Name: "vnet"}), network.NewInvalidArgumentError("AddressSpace", "can't be empty")},
-		{newValidNetworkOptions(&network.VNetOptions{AddressSpace: "192.168.0.0/16"}), network.NewInvalidArgumentError("Name", "can't be empty")},
-		{newValidNetworkOptions(&network.VNetOptions{
+		{&network.Options{}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
+		{&network.Options{ResourceGroup: "rg"}, network.NewInvalidArgumentError("Location", "can't be empty")},
+		{&network.Options{Location: "westus"}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
+		{newValidOptions(&network.VNetOptions{}), network.NewInvalidArgumentError("Name", "can't be empty")},
+		{newValidOptions(&network.VNetOptions{Name: "vnet"}), network.NewInvalidArgumentError("AddressSpace", "can't be empty")},
+		{newValidOptions(&network.VNetOptions{AddressSpace: "192.168.0.0/16"}), network.NewInvalidArgumentError("Name", "can't be empty")},
+		{newValidOptions(&network.VNetOptions{
 			Name:         "vnet",
 			AddressSpace: "192.168.0.0/16",
 		}), network.NewInvalidArgumentError("Subnets", "can't be empty")},
-		{newValidNetworkOptions(&network.VNetOptions{
+		{newValidOptions(&network.VNetOptions{
 			Name:         "vnet",
 			AddressSpace: "192.168.0.0/16",
 			Subnets: []network.Subnet{
@@ -68,8 +68,8 @@ func TestValidParameters(t *testing.T) {
 	}
 }
 
-func newValidNetworkOptions(vnet *network.VNetOptions) *network.NetworkOptions {
-	return &network.NetworkOptions{
+func newValidOptions(vnet *network.VNetOptions) *network.Options {
+	return &network.Options{
 		ResourceGroup: "valid_resource_group",
 		Location:      "valid_location",
 		VNet:          *vnet,

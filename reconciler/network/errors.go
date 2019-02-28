@@ -22,6 +22,7 @@ type ErrInvalid struct {
 	msg string
 }
 
+// NewInvalidArgumentError creates a new instance of ErrInvalid
 func NewInvalidArgumentError(name, msg string) error {
 	return &ErrInvalid{arg: name, msg: msg}
 }
