@@ -27,7 +27,7 @@ import (
 func InjectFakeSelfManaged(ctx context.Context) (*cluster.Reconciler, error) {
 	panic(wire.Build(
 		network.ProvideFakeVirtualNetwork,
-		network.ProvideBaseNetwork,
+		network.ProvideReconciler,
 		cluster.ProvideSelfManaged,
 	))
 }

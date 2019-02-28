@@ -11,8 +11,8 @@ import (
 
 // Injectors from inject_fakes.go:
 
-func InjectFakeBaseNetwork(ctx context.Context) (BaseNetworkProvider, error) {
-	vNetProvider := ProvideFakeVirtualNetwork()
-	baseNetworkProvider := ProvideBaseNetwork(vNetProvider)
-	return baseNetworkProvider, nil
+func InjectFakeReconciler(ctx context.Context) (Reconciler, error) {
+	vNetReconciler := ProvideFakeVirtualNetwork()
+	networkReconciler := ProvideReconciler(vNetReconciler)
+	return networkReconciler, nil
 }

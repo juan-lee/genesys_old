@@ -18,21 +18,27 @@ import (
 	"context"
 )
 
-type BaseNetworkOptions struct {
+type NetworkOptions struct {
 	ResourceGroup string
 	Location      string
 	VNet          VNetOptions
 }
 
-type VNetOptions struct {
+type Subnet struct {
 	Name         string
 	AddressSpace string
 }
 
-type VNetProvider interface {
+type VNetOptions struct {
+	Name         string
+	AddressSpace string
+	Subnets      []Subnet
+}
+
+type VNetReconciler interface {
 	Reconcile(ctx context.Context, opt *VNetOptions) error
 }
 
-type BaseNetworkProvider interface {
-	Reconcile(ctx context.Context, opt *BaseNetworkOptions) error
+type Reconciler interface {
+	Reconcile(ctx context.Context, opt *NetworkOptions) error
 }

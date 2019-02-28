@@ -18,12 +18,27 @@ import (
 	"context"
 )
 
-type vnetReconciler struct{}
-
-func ProvideVirtualNetwork() *vnetReconciler {
-	return &vnetReconciler{}
+type vnetReconciler struct {
+	vnet VNetReconciler
 }
 
 func (r vnetReconciler) Reconcile(ctx context.Context, opt *VNetOptions) error {
+	err := r.validate(opt)
+	if err != nil {
+		return err
+	}
+	return r.vnet.Reconcile(ctx, opt)
+}
+
+func (r vnetReconciler) validate(opt *VNetOptions) error {
+	if opt.Name == "" {
+		return NewInvalidArgumentError("Name", "can't be empty")
+	}
+	if opt.AddressSpace == "" {
+		return NewInvalidArgumentError("AddressSpace", "can't be empty")
+	}
+	if len(opt.Subnets) <= 0 {
+		return NewInvalidArgumentError("Subnets", "can't be empty")
+	}
 	return nil
 }

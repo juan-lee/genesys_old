@@ -14,8 +14,8 @@ import (
 // Injectors from inject_fakes.go:
 
 func InjectFakeSelfManaged(ctx context.Context) (*cluster.Reconciler, error) {
-	vNetProvider := network.ProvideFakeVirtualNetwork()
-	baseNetworkProvider := network.ProvideBaseNetwork(vNetProvider)
-	reconciler := cluster.ProvideSelfManaged(baseNetworkProvider)
-	return reconciler, nil
+	vNetReconciler := network.ProvideFakeVirtualNetwork()
+	reconciler := network.ProvideReconciler(vNetReconciler)
+	clusterReconciler := cluster.ProvideSelfManaged(reconciler)
+	return clusterReconciler, nil
 }

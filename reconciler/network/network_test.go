@@ -23,18 +23,32 @@ import (
 
 func TestValidParameters(t *testing.T) {
 	var variations = []struct {
-		opt      *network.BaseNetworkOptions
-		expected string
+		opt      *network.NetworkOptions
+		expected error
 	}{
-		{nil, "opt is invalid : can't be nil"},
-		{&network.BaseNetworkOptions{}, "ResourceGroup is invalid : can't be empty"},
-		{&network.BaseNetworkOptions{ResourceGroup: "rg"}, "Location is invalid : can't be empty"},
-		{&network.BaseNetworkOptions{Location: "westus"}, "ResourceGroup is invalid : can't be empty"},
+		{nil, network.NewInvalidArgumentError("opt", "can't be nil")},
+		{&network.NetworkOptions{}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
+		{&network.NetworkOptions{ResourceGroup: "rg"}, network.NewInvalidArgumentError("Location", "can't be empty")},
+		{&network.NetworkOptions{Location: "westus"}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
+		{newValidNetworkOptions(&network.VNetOptions{}), network.NewInvalidArgumentError("Name", "can't be empty")},
+		{newValidNetworkOptions(&network.VNetOptions{Name: "vnet"}), network.NewInvalidArgumentError("AddressSpace", "can't be empty")},
+		{newValidNetworkOptions(&network.VNetOptions{AddressSpace: "192.168.0.0/16"}), network.NewInvalidArgumentError("Name", "can't be empty")},
+		{newValidNetworkOptions(&network.VNetOptions{
+			Name:         "vnet",
+			AddressSpace: "192.168.0.0/16",
+		}), network.NewInvalidArgumentError("Subnets", "can't be empty")},
+		{newValidNetworkOptions(&network.VNetOptions{
+			Name:         "vnet",
+			AddressSpace: "192.168.0.0/16",
+			Subnets: []network.Subnet{
+				{Name: "subnet", AddressSpace: "192.168.1.0/16"},
+			},
+		}), nil},
 	}
 
 	for _, v := range variations {
-		t.Run(v.expected, func(t *testing.T) {
-			net, err := network.InjectFakeBaseNetwork(context.TODO())
+		t.Run("", func(t *testing.T) {
+			net, err := network.InjectFakeReconciler(context.TODO())
 			if err != nil {
 				t.Error(err)
 			}
@@ -44,9 +58,20 @@ func TestValidParameters(t *testing.T) {
 			}
 
 			err = net.Reconcile(context.TODO(), v.opt)
-			if err.Error() != v.expected {
+			if err != nil && v.expected != nil && err.Error() != v.expected.Error() {
 				t.Errorf("expected [%s] : actual [%s]", v.expected, err.Error())
 			}
+			if (err == nil && v.expected != nil) || (err != nil && v.expected == nil) {
+				t.Errorf("expected [%v] : actual [%v]", v.expected, err)
+			}
 		})
+	}
+}
+
+func newValidNetworkOptions(vnet *network.VNetOptions) *network.NetworkOptions {
+	return &network.NetworkOptions{
+		ResourceGroup: "valid_resource_group",
+		Location:      "valid_location",
+		VNet:          *vnet,
 	}
 }

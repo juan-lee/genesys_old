@@ -16,12 +16,12 @@ package network
 
 import "context"
 
-type fakeVNetReconciler struct{}
+type fakeVNetProvider struct{}
 
-func ProvideFakeVirtualNetwork() VNetProvider {
-	return &fakeVNetReconciler{}
+func ProvideFakeVirtualNetwork() VNetReconciler {
+	return fakeVNetProvider{}
 }
 
-func (r fakeVNetReconciler) Reconcile(ctx context.Context, opt *VNetOptions) error {
+func (vnet fakeVNetProvider) Reconcile(ctx context.Context, opt *VNetOptions) error {
 	return nil
 }

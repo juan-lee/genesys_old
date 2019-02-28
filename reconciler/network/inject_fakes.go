@@ -22,9 +22,9 @@ import (
 	"github.com/google/wire"
 )
 
-func InjectFakeBaseNetwork(ctx context.Context) (BaseNetworkProvider, error) {
+func InjectFakeReconciler(ctx context.Context) (Reconciler, error) {
 	panic(wire.Build(
 		ProvideFakeVirtualNetwork,
-		ProvideBaseNetwork,
+		ProvideReconciler,
 	))
 }

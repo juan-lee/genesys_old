@@ -21,15 +21,15 @@ import (
 )
 
 type Reconciler struct {
-	net network.BaseNetworkProvider
+	net network.Reconciler
 }
 
-func ProvideSelfManaged(net network.BaseNetworkProvider) *Reconciler {
+func ProvideSelfManaged(net network.Reconciler) *Reconciler {
 	return &Reconciler{
 		net: net,
 	}
 }
 
 func (r Reconciler) Reconcile(ctx context.Context) error {
-	return r.net.Reconcile(ctx, &network.BaseNetworkOptions{})
+	return r.net.Reconcile(ctx, &network.NetworkOptions{})
 }

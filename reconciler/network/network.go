@@ -18,28 +18,27 @@ import (
 	"context"
 )
 
-// BaseNetwork provides reconcilers for various kubernetes configurations
-type BaseNetwork struct {
-	vnet VNetProvider
+type reconciler struct {
+	vnet vnetReconciler
 }
 
-// ProvideBaseNetwork provides an instance of a base networking reconciler
-func ProvideBaseNetwork(vnet VNetProvider) BaseNetworkProvider {
-	return &BaseNetwork{
-		vnet: vnet,
+// ProvideReconciler provides an instance of a base networking reconciler
+func ProvideReconciler(vnet VNetReconciler) Reconciler {
+	return reconciler{
+		vnet: vnetReconciler{vnet: vnet},
 	}
 }
 
 // Reconcile provisions base networking for a kubernetes cluster
-func (n BaseNetwork) Reconcile(ctx context.Context, opt *BaseNetworkOptions) error {
-	err := n.validate(opt)
+func (r reconciler) Reconcile(ctx context.Context, opt *NetworkOptions) error {
+	err := r.validate(opt)
 	if err != nil {
 		return err
 	}
-	return n.vnet.Reconcile(ctx, &opt.VNet)
+	return r.vnet.Reconcile(ctx, &opt.VNet)
 }
 
-func (n BaseNetwork) validate(opt *BaseNetworkOptions) error {
+func (r reconciler) validate(opt *NetworkOptions) error {
 	if opt == nil {
 		return NewInvalidArgumentError("opt", "can't be nil")
 	}
