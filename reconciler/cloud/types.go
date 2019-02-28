@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package reconciler
+package cloud
 
-import (
-	"context"
-
-	"github.com/juan-lee/genesys/reconciler/cluster"
-)
-
-func NewFakeSelfManagedCluster() (*cluster.Reconciler, error) {
-	return InjectFakeSelfManaged(context.TODO())
+// ProviderOptions for kubernetes on azure
+type ProviderOptions struct {
+	ResourceGroup string
+	Location      string
+	ClientID      string
+	ClientSecret  string
+	TenantID      string
+	UserAgent     string
 }

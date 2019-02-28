@@ -7,15 +7,16 @@ package reconciler
 
 import (
 	"context"
+	"github.com/juan-lee/genesys/reconciler/cloud"
 	"github.com/juan-lee/genesys/reconciler/cluster"
 	"github.com/juan-lee/genesys/reconciler/network"
 )
 
 // Injectors from inject_fakes.go:
 
-func InjectFakeSelfManaged(ctx context.Context) (*cluster.Reconciler, error) {
-	vNetReconciler := network.ProvideFakeVirtualNetwork()
-	reconciler := network.ProvideReconciler(vNetReconciler)
+func InjectFakeSelfManaged(ctx context.Context, cloud2 *cloud.ProviderOptions) (*cluster.Reconciler, error) {
+	vNetReconciler := network.ProvideFakeVirtualNetwork(cloud2)
+	reconciler := network.ProvideReconciler(cloud2, vNetReconciler)
 	clusterReconciler := cluster.ProvideSelfManaged(reconciler)
 	return clusterReconciler, nil
 }

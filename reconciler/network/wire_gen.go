@@ -7,12 +7,13 @@ package network
 
 import (
 	"context"
+	"github.com/juan-lee/genesys/reconciler/cloud"
 )
 
 // Injectors from inject_fakes.go:
 
-func InjectFakeReconciler(ctx context.Context) (Reconciler, error) {
-	vNetReconciler := ProvideFakeVirtualNetwork()
-	networkReconciler := ProvideReconciler(vNetReconciler)
+func InjectFakeReconciler(ctx context.Context, cloud2 *cloud.ProviderOptions) (Reconciler, error) {
+	vNetReconciler := ProvideFakeVirtualNetwork(cloud2)
+	networkReconciler := ProvideReconciler(cloud2, vNetReconciler)
 	return networkReconciler, nil
 }

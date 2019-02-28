@@ -20,9 +20,7 @@ import (
 
 // Options for kubernetes clusters
 type Options struct {
-	ResourceGroup string
-	Location      string
-	VNet          VNetOptions
+	VNet VNetOptions
 }
 
 // Subnet configuration for kubernetes clusters
@@ -36,6 +34,13 @@ type VNetOptions struct {
 	Name         string
 	AddressSpace string
 	Subnets      []Subnet
+}
+
+type LoadBalancer struct {
+}
+
+// LoadBalancerOptions for kubernetes clusters
+type LoadBalancerOptions struct {
 }
 
 // VNetReconciler provides an interface for reconciling vnets

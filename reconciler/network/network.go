@@ -16,16 +16,21 @@ package network
 
 import (
 	"context"
+
+	"github.com/juan-lee/genesys/reconciler/cloud"
 )
 
 type reconciler struct {
-	vnet vnetReconciler
+	cloud *cloud.ProviderOptions
+	vnet  vnetReconciler
 }
 
 // ProvideReconciler provides an instance of a base networking reconciler
-func ProvideReconciler(vnet VNetReconciler) Reconciler {
+func ProvideReconciler(cloud *cloud.ProviderOptions, vnet VNetReconciler) Reconciler {
 	return reconciler{
-		vnet: vnetReconciler{vnet: vnet},
+		vnet: vnetReconciler{
+			vnet: vnet,
+		},
 	}
 }
 
@@ -41,12 +46,6 @@ func (r reconciler) Reconcile(ctx context.Context, opt *Options) error {
 func (r reconciler) validate(opt *Options) error {
 	if opt == nil {
 		return NewInvalidArgumentError("opt", "can't be nil")
-	}
-	if opt.ResourceGroup == "" {
-		return NewInvalidArgumentError("ResourceGroup", "can't be empty")
-	}
-	if opt.Location == "" {
-		return NewInvalidArgumentError("Location", "can't be empty")
 	}
 	return nil
 }

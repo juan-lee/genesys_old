@@ -13,3 +13,7 @@
 // limitations under the License.
 
 package cluster
+
+// ClusterOptions for kubernetes
+type ClusterOptions struct {
+}

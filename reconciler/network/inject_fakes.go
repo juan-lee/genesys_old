@@ -20,9 +20,10 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	"github.com/juan-lee/genesys/reconciler/cloud"
 )
 
-func InjectFakeReconciler(ctx context.Context) (Reconciler, error) {
+func InjectFakeReconciler(ctx context.Context, cloud *cloud.ProviderOptions) (Reconciler, error) {
 	panic(wire.Build(
 		ProvideFakeVirtualNetwork,
 		ProvideReconciler,

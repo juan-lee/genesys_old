@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/juan-lee/genesys/reconciler/cloud"
 	"github.com/juan-lee/genesys/reconciler/network"
 )
 
@@ -27,9 +28,7 @@ func TestValidParameters(t *testing.T) {
 		expected error
 	}{
 		{nil, network.NewInvalidArgumentError("opt", "can't be nil")},
-		{&network.Options{}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
-		{&network.Options{ResourceGroup: "rg"}, network.NewInvalidArgumentError("Location", "can't be empty")},
-		{&network.Options{Location: "westus"}, network.NewInvalidArgumentError("ResourceGroup", "can't be empty")},
+		{&network.Options{}, network.NewInvalidArgumentError("Name", "can't be empty")},
 		{newValidOptions(&network.VNetOptions{}), network.NewInvalidArgumentError("Name", "can't be empty")},
 		{newValidOptions(&network.VNetOptions{Name: "vnet"}), network.NewInvalidArgumentError("AddressSpace", "can't be empty")},
 		{newValidOptions(&network.VNetOptions{AddressSpace: "192.168.0.0/16"}), network.NewInvalidArgumentError("Name", "can't be empty")},
@@ -48,7 +47,7 @@ func TestValidParameters(t *testing.T) {
 
 	for _, v := range variations {
 		t.Run("", func(t *testing.T) {
-			net, err := network.InjectFakeReconciler(context.TODO())
+			net, err := network.InjectFakeReconciler(context.TODO(), &cloud.ProviderOptions{})
 			if err != nil {
 				t.Error(err)
 			}
@@ -70,8 +69,6 @@ func TestValidParameters(t *testing.T) {
 
 func newValidOptions(vnet *network.VNetOptions) *network.Options {
 	return &network.Options{
-		ResourceGroup: "valid_resource_group",
-		Location:      "valid_location",
-		VNet:          *vnet,
+		VNet: *vnet,
 	}
 }

@@ -12,23 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build wireinject
-
-package reconciler
-
-import (
-	"context"
-
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/reconciler/cloud"
-	"github.com/juan-lee/genesys/reconciler/cluster"
-	"github.com/juan-lee/genesys/reconciler/network"
-)
-
-func InjectFakeSelfManaged(ctx context.Context, cloud *cloud.ProviderOptions) (*cluster.Reconciler, error) {
-	panic(wire.Build(
-		network.ProvideFakeVirtualNetwork,
-		network.ProvideReconciler,
-		cluster.ProvideSelfManaged,
-	))
-}
+// Package cloud provides reconcilers for various kubernetes configurations
+package cloud

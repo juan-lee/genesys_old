@@ -14,13 +14,21 @@
 
 package network
 
-import "context"
+import (
+	"context"
 
-type fakeVNetProvider struct{}
+	"github.com/juan-lee/genesys/reconciler/cloud"
+)
+
+type fakeVNetProvider struct {
+	cloud *cloud.ProviderOptions
+}
 
 // ProvideFakeVirtualNetwork provides a fake vnet reconciler for testing
-func ProvideFakeVirtualNetwork() VNetReconciler {
-	return fakeVNetProvider{}
+func ProvideFakeVirtualNetwork(cloud *cloud.ProviderOptions) VNetReconciler {
+	return fakeVNetProvider{
+		cloud: cloud,
+	}
 }
 
 func (vnet fakeVNetProvider) Reconcile(ctx context.Context, opt *VNetOptions) error {
