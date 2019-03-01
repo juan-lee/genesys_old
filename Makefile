@@ -43,6 +43,7 @@ ifndef GOPATH
 	$(error GOPATH not defined, please define GOPATH. Run "go help gopath" to learn more about GOPATH)
 endif
 	go generate ./pkg/... ./cmd/...
+	go run vendor/k8s.io/code-generator/cmd/conversion-gen/main.go -i github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1 -O zz_generated.conversion.go
 
 # Build the docker image
 docker-build: test
