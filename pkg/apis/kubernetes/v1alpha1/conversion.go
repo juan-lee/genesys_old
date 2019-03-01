@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package v1alpha1 contains API Schema definitions for the kubernetes v1alpha1 API group
-// +k8s:openapi-gen=true
-// +k8s:deepcopy-gen=package
-// +k8s:conversion-gen=github.com/juan-lee/genesys/pkg/apis/kubernetes
-// +k8s:defaulter-gen=TypeMeta
-// +groupName=kubernetes.azure.com
 package v1alpha1
+
+import (
+	runtime "k8s.io/apimachinery/pkg/runtime"
+)
+
+func addConversionFuncs(scheme *runtime.Scheme) error {
+	return scheme.AddConversionFuncs()
+}
