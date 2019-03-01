@@ -16,19 +16,10 @@
 
 package reconciler
 
-import (
-	"context"
-
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/reconciler/cloud"
-	"github.com/juan-lee/genesys/reconciler/cluster"
-	"github.com/juan-lee/genesys/reconciler/network"
-)
-
-func InjectFakeSelfManaged(ctx context.Context, cloud *cloud.ProviderOptions) (*cluster.Reconciler, error) {
-	panic(wire.Build(
-		network.ProvideFakeVirtualNetwork,
-		network.ProvideReconciler,
-		cluster.ProvideSelfManaged,
-	))
-}
+// func InjectFakeSelfManaged(ctx context.Context, cloud *cloud.ProviderOptions) (*cluster.Reconciler, error) {
+// 	panic(wire.Build(
+// 		network.ProvideFakeVirtualNetwork,
+// 		network.ProvideReconciler,
+// 		cluster.ProvideSelfManaged,
+// 	))
+// }

@@ -26,6 +26,7 @@ import (
 func InjectFakeReconciler(ctx context.Context, cloud *cloud.ProviderOptions) (Reconciler, error) {
 	panic(wire.Build(
 		ProvideFakeVirtualNetwork,
+		ProvideFakeLoadBalancer,
 		ProvideReconciler,
 	))
 }

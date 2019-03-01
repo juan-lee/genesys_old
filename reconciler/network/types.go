@@ -36,16 +36,19 @@ type VNetOptions struct {
 	Subnets      []Subnet
 }
 
-type LoadBalancer struct {
-}
-
 // LoadBalancerOptions for kubernetes clusters
 type LoadBalancerOptions struct {
+	Name string
 }
 
 // VNetReconciler provides an interface for reconciling vnets
 type VNetReconciler interface {
 	Reconcile(ctx context.Context, opt *VNetOptions) error
+}
+
+// LoadBalancerReconciler provides an interface for reconciling vnets
+type LoadBalancerReconciler interface {
+	Reconcile(ctx context.Context, opt *LoadBalancerOptions) error
 }
 
 // Reconciler provides an interface for reconciling networks for kubernetes

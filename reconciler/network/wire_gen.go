@@ -14,6 +14,7 @@ import (
 
 func InjectFakeReconciler(ctx context.Context, cloud2 *cloud.ProviderOptions) (Reconciler, error) {
 	vNetReconciler := ProvideFakeVirtualNetwork(cloud2)
-	networkReconciler := ProvideReconciler(cloud2, vNetReconciler)
+	loadBalancerReconciler := ProvideFakeLoadBalancer(cloud2)
+	networkReconciler := ProvideReconciler(cloud2, vNetReconciler, loadBalancerReconciler)
 	return networkReconciler, nil
 }

@@ -26,7 +26,7 @@ type reconciler struct {
 }
 
 // ProvideReconciler provides an instance of a base networking reconciler
-func ProvideReconciler(cloud *cloud.ProviderOptions, vnet VNetReconciler) Reconciler {
+func ProvideReconciler(cloud *cloud.ProviderOptions, vnet VNetReconciler, lb LoadBalancerReconciler) Reconciler {
 	return reconciler{
 		vnet: vnetReconciler{
 			vnet: vnet,

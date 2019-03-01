@@ -13,3 +13,24 @@
 // limitations under the License.
 
 package network
+
+import (
+	"context"
+
+	"github.com/juan-lee/genesys/reconciler/cloud"
+)
+
+type fakeLoadBalancerProvider struct {
+	cloud *cloud.ProviderOptions
+}
+
+// ProvideFakeVirtualNetwork provides a fake vnet reconciler for testing
+func ProvideFakeLoadBalancer(cloud *cloud.ProviderOptions) LoadBalancerReconciler {
+	return fakeLoadBalancerProvider{
+		cloud: cloud,
+	}
+}
+
+func (vnet fakeLoadBalancerProvider) Reconcile(ctx context.Context, opt *LoadBalancerOptions) error {
+	return nil
+}
