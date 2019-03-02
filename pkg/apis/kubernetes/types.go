@@ -31,6 +31,7 @@ type ClusterStatus struct {
 
 // Cluster is the Schema for the clusters API
 // +k8s:openapi-gen=true
+// +k8s:controller-gen=false
 type Cluster struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
