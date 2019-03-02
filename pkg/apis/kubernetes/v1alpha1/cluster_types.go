@@ -16,7 +16,10 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
+
+var localSchemeBuilder = &SchemeBuilder
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -56,5 +59,17 @@ type ClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
+	SchemeBuilder.Register(addDefaultingFuncs, addConversionFuncs)
+}
+
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion, &Cluster{}, &ClusterList{})
+
+	// Add common types
+	scheme.AddKnownTypes(SchemeGroupVersion, &metav1.Status{})
+
+	// Add the watch version that applies
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+
+	return nil
 }

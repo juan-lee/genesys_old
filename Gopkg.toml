@@ -36,6 +36,11 @@ required = [
     unused-packages = false
     non-go = false
 
+  [[prune.project]]
+    name="k8s.io/gengo"
+    unused-packages = false
+    non-go = false
+
 # STANZAS BELOW ARE GENERATED AND MAY BE WRITTEN - DO NOT MODIFY BELOW THIS LINE.
 
 [[constraint]]
