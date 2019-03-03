@@ -25,14 +25,14 @@ import (
 var _ Reconciler = &reconciler{}
 
 type reconciler struct {
-	log  logr.Logger
-	vnet VNETProvider
+	log     logr.Logger
+	network Provider
 }
 
-func ProvideReconciler(log logr.Logger, vnet VNETProvider) (Reconciler, error) {
+func ProvideReconciler(log logr.Logger, network Provider) (Reconciler, error) {
 	return &reconciler{
-		log:  log,
-		vnet: vnet,
+		log:     log,
+		network: network,
 	}, nil
 }
 
@@ -40,10 +40,10 @@ func (r *reconciler) Reconcile(desired k8sv1alpha1.Network) (reconcile.Result, e
 	r.log.Info("network.Reconcile enter")
 	defer r.log.Info("network.Reconcile exit")
 
-	err := r.vnet.State(context.TODO(), desired)
+	err := r.network.State(context.TODO(), desired)
 	if err != nil {
 		r.log.Info("State", "err", err)
-		err := r.vnet.Update(context.TODO(), desired)
+		err := r.network.Update(context.TODO(), desired)
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil

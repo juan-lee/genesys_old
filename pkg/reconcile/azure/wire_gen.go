@@ -27,11 +27,11 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (cluster.Reconciler, error
 	if err != nil {
 		return nil, err
 	}
-	vnetProvider, err := ProvideNetwork(log, authorizer, c)
+	provider, err := ProvideNetwork(log, authorizer, c)
 	if err != nil {
 		return nil, err
 	}
-	reconciler, err := network.ProvideReconciler(log, vnetProvider)
+	reconciler, err := network.ProvideReconciler(log, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,6 @@ func provideConfiguration() (Configuration, error) {
 		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
 		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
 		TenantID:     os.Getenv("AZURE_TENANT_ID"),
-		UserAgent:    "genesys",
 	}, nil
 }
 

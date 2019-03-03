@@ -34,27 +34,27 @@ const (
 	defaultSubnetName         = "k8s-subnet"
 )
 
-var _ network.VNETProvider = &netProvider{}
+var _ network.Provider = &networkProvider{}
 
-type netProvider struct {
+type networkProvider struct {
 	log    logr.Logger
 	config k8sv1alpha1.Cloud
 	client aznet.VirtualNetworksClient
 }
 
-func ProvideNetwork(log logr.Logger, a autorest.Authorizer, c k8sv1alpha1.Cloud) (network.VNETProvider, error) {
+func ProvideNetwork(log logr.Logger, a autorest.Authorizer, c k8sv1alpha1.Cloud) (network.Provider, error) {
 	client, err := newVNETClient(c.SubscriptionID, a)
 	if err != nil {
 		return nil, err
 	}
-	return &netProvider{
+	return &networkProvider{
 		log:    log,
 		config: c,
 		client: client,
 	}, nil
 }
 
-func (r *netProvider) State(ctx context.Context, desired k8sv1alpha1.Network) error {
+func (r *networkProvider) State(ctx context.Context, desired k8sv1alpha1.Network) error {
 	vnet, err := r.client.Get(ctx, r.config.ResourceGroup, r.vnetName(), "")
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (r *netProvider) State(ctx context.Context, desired k8sv1alpha1.Network) er
 	return nil
 }
 
-func (r *netProvider) Update(ctx context.Context, desired k8sv1alpha1.Network) error {
+func (r *networkProvider) Update(ctx context.Context, desired k8sv1alpha1.Network) error {
 	err := r.validate(&desired)
 	if err != nil {
 		return err
@@ -93,15 +93,15 @@ func (r *netProvider) Update(ctx context.Context, desired k8sv1alpha1.Network) e
 	return err
 }
 
-func (r *netProvider) Delete(ctx context.Context) error {
+func (r *networkProvider) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (r *netProvider) vnetName() string {
+func (r *networkProvider) vnetName() string {
 	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
 }
 
-func (r *netProvider) validate(desired *k8sv1alpha1.Network) error {
+func (r *networkProvider) validate(desired *k8sv1alpha1.Network) error {
 	if desired == nil {
 		return errors.New("desired cannot be nil")
 	}
@@ -119,7 +119,7 @@ func (r *netProvider) validate(desired *k8sv1alpha1.Network) error {
 	return nil
 }
 
-func (r *netProvider) reachedDesiredState(desired *k8sv1alpha1.Network, current *aznet.VirtualNetwork) bool {
+func (r *networkProvider) reachedDesiredState(desired *k8sv1alpha1.Network, current *aznet.VirtualNetwork) bool {
 	if current.Location == nil || *current.Location != r.config.Location {
 		r.log.Info("location is not in sync", "location", current.Location)
 		return false

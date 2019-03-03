@@ -21,6 +21,14 @@ import (
 
 var localSchemeBuilder = &SchemeBuilder
 
+const (
+	Provisioned  ClusterPhase = "Provisioned"
+	Provisioning ClusterPhase = "Provisioning"
+	Deleting     ClusterPhase = "Deleting"
+)
+
+type ClusterPhase string
+
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
 	Cloud   Cloud   `json:"cloud,omitempty"`
@@ -29,6 +37,8 @@ type ClusterSpec struct {
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
+	Phase   ClusterPhase `json:"phase,omitempty"`
+	Message string       `json:"message,omitempty"`
 }
 
 // +genclient

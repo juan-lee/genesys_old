@@ -19,5 +19,4 @@ type Configuration struct {
 	ClientID     string
 	ClientSecret string
 	TenantID     string
-	UserAgent    string
 }

@@ -45,7 +45,6 @@ func provideConfiguration() (Configuration, error) {
 		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
 		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
 		TenantID:     os.Getenv("AZURE_TENANT_ID"),
-		UserAgent:    "genesys",
 	}, nil
 }
 

@@ -33,12 +33,7 @@ var _ Reconciler = Func(nil)
 // Reconcile implements Reconciler.
 func (r Func) Reconcile(o k8sv1alpha1.Network) (reconcile.Result, error) { return r(o) }
 
-type VNETOptions struct {
-	CIDR       string
-	SubnetCIDR string
-}
-
-type VNETProvider interface {
+type Provider interface {
 	State(ctx context.Context, desired k8sv1alpha1.Network) error
 	Update(ctx context.Context, desired k8sv1alpha1.Network) error
 	Delete(ctx context.Context) error
