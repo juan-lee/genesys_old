@@ -15,24 +15,30 @@
 package cluster
 
 import (
+	"github.com/go-logr/logr"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"github.com/juan-lee/genesys/pkg/reconcile/network"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var _ reconcile.Reconciler = &ClusterReconciler{}
+var _ Reconciler = &ClusterReconciler{}
 
 type ClusterReconciler struct {
+	log     logr.Logger
 	network network.Reconciler
 }
 
-func ProvideReconciler(net network.Reconciler) (reconcile.Reconciler, error) {
+func ProvideReconciler(log logr.Logger, net network.Reconciler) (Reconciler, error) {
 	return &ClusterReconciler{
+		log:     log,
 		network: net,
 	}, nil
 }
 
-func (r *ClusterReconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	result, err := r.network.Reconcile(request)
+func (r *ClusterReconciler) Reconcile(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+	r.log.Info("cluster.Reconcile enter")
+	defer r.log.Info("cluster.Reconcile exit")
+	result, err := r.network.Reconcile(desired.Spec.Network)
 	if err != nil {
 		return result, err
 	}

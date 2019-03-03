@@ -17,15 +17,21 @@ package network
 import (
 	"context"
 
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler interface {
-	// Reconciler performs a full reconciliation for the object referred to by the Request.
-	// The Controller will requeue the Request to be processed again if an error is non-nil or
-	// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-	Reconcile(reconcile.Request) (reconcile.Result, error)
+	Reconcile(k8sv1alpha1.Network) (reconcile.Result, error)
 }
+
+// Func is a function that implements the reconcile interface.
+type Func func(k8sv1alpha1.Network) (reconcile.Result, error)
+
+var _ Reconciler = Func(nil)
+
+// Reconcile implements Reconciler.
+func (r Func) Reconcile(o k8sv1alpha1.Network) (reconcile.Result, error) { return r(o) }
 
 type VNETOptions struct {
 	CIDR       string
@@ -33,7 +39,7 @@ type VNETOptions struct {
 }
 
 type VNETProvider interface {
-	State(ctx context.Context, desired VNETOptions) error
-	Update(ctx context.Context, desired VNETOptions) error
+	State(ctx context.Context, desired k8sv1alpha1.Network) error
+	Update(ctx context.Context, desired k8sv1alpha1.Network) error
 	Delete(ctx context.Context) error
 }

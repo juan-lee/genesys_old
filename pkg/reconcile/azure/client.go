@@ -19,9 +19,9 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 )
 
-func newVNETClient(c Configuration, a autorest.Authorizer) (aznet.VirtualNetworksClient, error) {
-	client := aznet.NewVirtualNetworksClient(c.SubscriptionID)
+func newVNETClient(subID string, a autorest.Authorizer) (aznet.VirtualNetworksClient, error) {
+	client := aznet.NewVirtualNetworksClient(subID)
 	client.Authorizer = a
-	client.AddToUserAgent(c.UserAgent)
+	client.AddToUserAgent("genesys")
 	return client, nil
 }

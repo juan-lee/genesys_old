@@ -21,19 +21,14 @@ import (
 
 var localSchemeBuilder = &SchemeBuilder
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Cloud   Cloud   `json:"cloud,omitempty"`
+	Network Network `json:"network,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +genclient
@@ -56,6 +51,19 @@ type ClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Cluster `json:"items"`
+}
+
+// Network is the Schema for cluster networking
+type Network struct {
+	CIDR       string `json:"cidr,omitempty"`
+	SubnetCIDR string `json:"subnetCIDR,omitempty"`
+}
+
+// Cloud is the Schema for cluster cloud configuration
+type Cloud struct {
+	SubscriptionID string `json:"subscriptionID,omitempty"`
+	ResourceGroup  string `json:"resourceGroup,omitempty"`
+	Location       string `json:"location,omitempty"`
 }
 
 func init() {

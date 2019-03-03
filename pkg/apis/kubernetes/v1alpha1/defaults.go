@@ -14,8 +14,15 @@
 
 package v1alpha1
 
-import runtime "k8s.io/apimachinery/pkg/runtime"
+import (
+	runtime "k8s.io/apimachinery/pkg/runtime"
+)
 
 func addDefaultingFuncs(scheme *runtime.Scheme) error {
 	return RegisterDefaults(scheme)
+}
+
+func SetDefaults_Cluster(obj *Cluster) {
+	obj.Spec.Network.CIDR = "10.0.0.0/8"
+	obj.Spec.Network.SubnetCIDR = "10.240.0.0/12"
 }

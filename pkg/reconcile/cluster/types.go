@@ -13,3 +13,20 @@
 // limitations under the License.
 
 package cluster
+
+import (
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+type Reconciler interface {
+	Reconcile(k8sv1alpha1.Cluster) (reconcile.Result, error)
+}
+
+// Func is a function that implements the reconcile interface.
+type Func func(k8sv1alpha1.Cluster) (reconcile.Result, error)
+
+var _ Reconciler = Func(nil)
+
+// Reconcile implements Reconciler.
+func (r Func) Reconcile(o k8sv1alpha1.Cluster) (reconcile.Result, error) { return r(o) }

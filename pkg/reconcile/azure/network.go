@@ -18,10 +18,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 
 	aznet "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/go-logr/logr"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"github.com/juan-lee/genesys/pkg/reconcile/network"
 )
 
@@ -34,22 +37,24 @@ const (
 var _ network.VNETProvider = &netProvider{}
 
 type netProvider struct {
-	config Configuration
+	log    logr.Logger
+	config k8sv1alpha1.Cloud
 	client aznet.VirtualNetworksClient
 }
 
-func ProvideNetwork(c Configuration, a autorest.Authorizer) (network.VNETProvider, error) {
-	client, err := newVNETClient(c, a)
+func ProvideNetwork(log logr.Logger, a autorest.Authorizer, c k8sv1alpha1.Cloud) (network.VNETProvider, error) {
+	client, err := newVNETClient(c.SubscriptionID, a)
 	if err != nil {
 		return nil, err
 	}
 	return &netProvider{
+		log:    log,
 		config: c,
 		client: client,
 	}, nil
 }
 
-func (r *netProvider) State(ctx context.Context, desired network.VNETOptions) error {
+func (r *netProvider) State(ctx context.Context, desired k8sv1alpha1.Network) error {
 	vnet, err := r.client.Get(ctx, r.config.ResourceGroup, r.vnetName(), "")
 	if err != nil {
 		return err
@@ -62,7 +67,7 @@ func (r *netProvider) State(ctx context.Context, desired network.VNETOptions) er
 	return nil
 }
 
-func (r *netProvider) Update(ctx context.Context, desired network.VNETOptions) error {
+func (r *netProvider) Update(ctx context.Context, desired k8sv1alpha1.Network) error {
 	err := r.validate(&desired)
 	if err != nil {
 		return err
@@ -96,7 +101,7 @@ func (r *netProvider) vnetName() string {
 	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
 }
 
-func (r *netProvider) validate(desired *network.VNETOptions) error {
+func (r *netProvider) validate(desired *k8sv1alpha1.Network) error {
 	if desired == nil {
 		return errors.New("desired cannot be nil")
 	}
@@ -114,34 +119,34 @@ func (r *netProvider) validate(desired *network.VNETOptions) error {
 	return nil
 }
 
-func (r *netProvider) reachedDesiredState(desired *network.VNETOptions, current *aznet.VirtualNetwork) bool {
-	if desired == nil || current == nil {
-		return false
-	}
-
+func (r *netProvider) reachedDesiredState(desired *k8sv1alpha1.Network, current *aznet.VirtualNetwork) bool {
 	if current.Location == nil || *current.Location != r.config.Location {
+		r.log.Info("location is not in sync", "location", current.Location)
 		return false
 	}
 
-	if current.VirtualNetworkPropertiesFormat == nil ||
-		current.VirtualNetworkPropertiesFormat.AddressSpace == nil ||
-		current.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes == nil ||
-		len(*current.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes) != 1 ||
-		current.VirtualNetworkPropertiesFormat.Subnets == nil ||
-		len(*current.VirtualNetworkPropertiesFormat.Subnets) != 1 ||
-		(*current.VirtualNetworkPropertiesFormat.Subnets)[0].Name == nil ||
-		(*current.VirtualNetworkPropertiesFormat.Subnets)[0].AddressPrefix == nil {
-		return false
+	return reflect.DeepEqual(*desired, convert(current))
+}
+
+func convert(in *aznet.VirtualNetwork) k8sv1alpha1.Network {
+	out := k8sv1alpha1.Network{}
+
+	if in != nil &&
+		in.VirtualNetworkPropertiesFormat != nil &&
+		in.VirtualNetworkPropertiesFormat.AddressSpace != nil &&
+		in.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes != nil &&
+		len(*in.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes) == 1 {
+		out.CIDR = (*in.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes)[0]
 	}
 
-	if (*current.VirtualNetworkPropertiesFormat.AddressSpace.AddressPrefixes)[0] != desired.CIDR {
-		return false
+	if in != nil &&
+		in.VirtualNetworkPropertiesFormat != nil &&
+		in.VirtualNetworkPropertiesFormat.Subnets != nil &&
+		len(*in.VirtualNetworkPropertiesFormat.Subnets) == 1 &&
+		(*in.VirtualNetworkPropertiesFormat.Subnets)[0].Name != nil &&
+		(*in.VirtualNetworkPropertiesFormat.Subnets)[0].AddressPrefix != nil {
+		out.SubnetCIDR = *(*in.VirtualNetworkPropertiesFormat.Subnets)[0].AddressPrefix
 	}
 
-	if *(*current.VirtualNetworkPropertiesFormat.Subnets)[0].Name != defaultSubnetName ||
-		*(*current.VirtualNetworkPropertiesFormat.Subnets)[0].AddressPrefix != desired.SubnetCIDR {
-		return false
-	}
-
-	return false
+	return out
 }

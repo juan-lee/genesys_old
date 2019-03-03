@@ -9,36 +9,52 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
 	"github.com/juan-lee/genesys/pkg/reconcile/network"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"os"
 )
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(c Configuration) (reconcile.Reconciler, error) {
-	authorizer, err := provideAuthorizer(c)
+func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (cluster.Reconciler, error) {
+	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
 	}
-	vnetProvider, err := ProvideNetwork(c, authorizer)
+	authorizer, err := provideAuthorizer(log, configuration)
 	if err != nil {
 		return nil, err
 	}
-	reconciler, err := network.ProvideReconciler(vnetProvider)
+	vnetProvider, err := ProvideNetwork(log, authorizer, c)
 	if err != nil {
 		return nil, err
 	}
-	reconcileReconciler, err := cluster.ProvideReconciler(reconciler)
+	reconciler, err := network.ProvideReconciler(log, vnetProvider)
 	if err != nil {
 		return nil, err
 	}
-	return reconcileReconciler, nil
+	clusterReconciler, err := cluster.ProvideReconciler(log, reconciler)
+	if err != nil {
+		return nil, err
+	}
+	return clusterReconciler, nil
 }
 
 // inject_azure.go:
 
-func provideAuthorizer(c Configuration) (autorest.Authorizer, error) {
+func provideConfiguration() (Configuration, error) {
+	return Configuration{
+		Cloud:        "AzurePublicCloud",
+		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
+		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
+		TenantID:     os.Getenv("AZURE_TENANT_ID"),
+		UserAgent:    "genesys",
+	}, nil
+}
+
+func provideAuthorizer(log logr.Logger, c Configuration) (autorest.Authorizer, error) {
 	env, err := azure.EnvironmentFromName(c.Cloud)
 	if err != nil {
 		return nil, err

@@ -15,12 +15,9 @@
 package azure
 
 type Configuration struct {
-	Cloud          string
-	SubscriptionID string
-	ResourceGroup  string
-	Location       string
-	ClientID       string
-	ClientSecret   string
-	TenantID       string
-	UserAgent      string
+	Cloud        string
+	ClientID     string
+	ClientSecret string
+	TenantID     string
+	UserAgent    string
 }

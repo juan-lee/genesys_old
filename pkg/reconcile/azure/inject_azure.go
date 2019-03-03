@@ -17,17 +17,21 @@
 package azure
 
 import (
+	"os"
+
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/go-logr/logr"
 	"github.com/google/wire"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
 	"github.com/juan-lee/genesys/pkg/reconcile/network"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func InjectCluster(c Configuration) (reconcile.Reconciler, error) {
+func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (cluster.Reconciler, error) {
 	panic(wire.Build(
+		provideConfiguration,
 		provideAuthorizer,
 		ProvideNetwork,
 		network.ProvideReconciler,
@@ -35,7 +39,17 @@ func InjectCluster(c Configuration) (reconcile.Reconciler, error) {
 	))
 }
 
-func provideAuthorizer(c Configuration) (autorest.Authorizer, error) {
+func provideConfiguration() (Configuration, error) {
+	return Configuration{
+		Cloud:        "AzurePublicCloud",
+		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
+		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
+		TenantID:     os.Getenv("AZURE_TENANT_ID"),
+		UserAgent:    "genesys",
+	}, nil
+}
+
+func provideAuthorizer(log logr.Logger, c Configuration) (autorest.Authorizer, error) {
 	env, err := azure.EnvironmentFromName(c.Cloud)
 	if err != nil {
 		return nil, err

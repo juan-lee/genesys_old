@@ -15,21 +15,36 @@
 package network
 
 import (
+	"context"
+
+	"github.com/go-logr/logr"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var _ Reconciler = &reconciler{}
 
 type reconciler struct {
-	net VNETProvider
+	log  logr.Logger
+	vnet VNETProvider
 }
 
-func ProvideReconciler(net VNETProvider) (Reconciler, error) {
+func ProvideReconciler(log logr.Logger, vnet VNETProvider) (Reconciler, error) {
 	return &reconciler{
-		net: net,
+		log:  log,
+		vnet: vnet,
 	}, nil
 }
 
-func (r *reconciler) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *reconciler) Reconcile(desired k8sv1alpha1.Network) (reconcile.Result, error) {
+	r.log.Info("network.Reconcile enter")
+	defer r.log.Info("network.Reconcile exit")
+
+	err := r.vnet.State(context.TODO(), desired)
+	if err != nil {
+		r.log.Info("State", "err", err)
+		err := r.vnet.Update(context.TODO(), desired)
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, nil
 }

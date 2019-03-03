@@ -27,6 +27,23 @@ spec:
         metadata:
           type: object
         spec:
+          properties:
+            cloud:
+              properties:
+                location:
+                  type: string
+                resourceGroup:
+                  type: string
+                subscriptionID:
+                  type: string
+              type: object
+            network:
+              properties:
+                cidr:
+                  type: string
+                subnetCIDR:
+                  type: string
+              type: object
           type: object
         status:
           type: object

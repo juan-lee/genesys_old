@@ -14,8 +14,12 @@
 
 package azure
 
-import "sigs.k8s.io/controller-runtime/pkg/reconcile"
+import (
+	"github.com/go-logr/logr"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
+)
 
-func NewCluster(c Configuration) (reconcile.Reconciler, error) {
-	return InjectCluster(c)
+func NewCluster(log logr.Logger, c k8sv1alpha1.Cloud) (cluster.Reconciler, error) {
+	return InjectCluster(log, c)
 }
