@@ -16,7 +16,6 @@ package azure
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -69,11 +68,6 @@ func (r *VirtualNetwork) Get(ctx context.Context) (*v1alpha1.Network, error) {
 }
 
 func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) error {
-	err := r.validate(&desired)
-	if err != nil {
-		return err
-	}
-
 	_, err = r.client.CreateOrUpdate(ctx, r.config.ResourceGroup, r.vnetName(),
 		aznet.VirtualNetwork{
 			Location: to.StringPtr(r.config.Location),
@@ -104,24 +98,6 @@ func (r *VirtualNetwork) Delete(ctx context.Context) error {
 
 func (r *VirtualNetwork) vnetName() string {
 	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
-}
-
-func (r *VirtualNetwork) validate(desired *v1alpha1.Network) error {
-	if desired == nil {
-		return errors.New("desired cannot be nil")
-	}
-
-	// TODO: validate cidr
-	if desired.CIDR == "" {
-		return errors.New("CIDR cannot be empty")
-	}
-
-	// TODO: validate cidr
-	if desired.SubnetCIDR == "" {
-		return errors.New("SubnetCIDR cannot be empty")
-	}
-
-	return nil
 }
 
 func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current *aznet.VirtualNetwork) bool {
