@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"reflect"
 
-	aznet "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/go-logr/logr"
@@ -28,9 +28,7 @@ import (
 )
 
 const (
-	defaultVirtualNetworkCIDR = "10.0.0.0/8"
-	defaultSubnetCIDR         = "10.240.0.0/12"
-	defaultSubnetName         = "k8s-subnet"
+	defaultSubnetName = "k8s-subnet"
 )
 
 var _ provider.VirtualNetwork = &VirtualNetwork{}
@@ -38,7 +36,7 @@ var _ provider.VirtualNetwork = &VirtualNetwork{}
 type VirtualNetwork struct {
 	log    logr.Logger
 	config v1alpha1.Cloud
-	client aznet.VirtualNetworksClient
+	client network.VirtualNetworksClient
 }
 
 func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud) (*VirtualNetwork, error) {
@@ -68,17 +66,17 @@ func (r *VirtualNetwork) Get(ctx context.Context) (*v1alpha1.Network, error) {
 }
 
 func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) error {
-	_, err = r.client.CreateOrUpdate(ctx, r.config.ResourceGroup, r.vnetName(),
-		aznet.VirtualNetwork{
+	_, err := r.client.CreateOrUpdate(ctx, r.config.ResourceGroup, r.vnetName(),
+		network.VirtualNetwork{
 			Location: to.StringPtr(r.config.Location),
-			VirtualNetworkPropertiesFormat: &aznet.VirtualNetworkPropertiesFormat{
-				AddressSpace: &aznet.AddressSpace{
+			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
+				AddressSpace: &network.AddressSpace{
 					AddressPrefixes: &[]string{desired.CIDR},
 				},
-				Subnets: &[]aznet.Subnet{
+				Subnets: &[]network.Subnet{
 					{
 						Name: to.StringPtr(defaultSubnetName),
-						SubnetPropertiesFormat: &aznet.SubnetPropertiesFormat{
+						SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
 							AddressPrefix: to.StringPtr(desired.SubnetCIDR),
 						},
 					},
@@ -100,7 +98,7 @@ func (r *VirtualNetwork) vnetName() string {
 	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
 }
 
-func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current *aznet.VirtualNetwork) bool {
+func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current *network.VirtualNetwork) bool {
 	if current.Location == nil || *current.Location != r.config.Location {
 		r.log.Info("location is not in sync", "location", current.Location)
 		return false
@@ -109,7 +107,7 @@ func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current 
 	return reflect.DeepEqual(*desired, convert(current))
 }
 
-func convert(in *aznet.VirtualNetwork) v1alpha1.Network {
+func convert(in *network.VirtualNetwork) v1alpha1.Network {
 	out := v1alpha1.Network{}
 
 	if in != nil &&

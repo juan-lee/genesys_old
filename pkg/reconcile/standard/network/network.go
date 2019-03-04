@@ -27,9 +27,10 @@ import (
 type Reconciler struct {
 	log  logr.Logger
 	vnet provider.VirtualNetwork
+	cpe  provider.ControlPlaneEndpoint
 }
 
-func ProvideReconciler(log logr.Logger, vnet provider.VirtualNetwork) (*Reconciler, error) {
+func ProvideReconciler(log logr.Logger, vnet provider.VirtualNetwork, cpe provider.ControlPlaneEndpoint) (*Reconciler, error) {
 	return &Reconciler{
 		log:  log,
 		vnet: vnet,
@@ -40,25 +41,43 @@ func (r *Reconciler) Reconcile(net v1alpha1.Network) (reconcile.Result, error) {
 	r.log.Info("network.Reconcile enter")
 	defer r.log.Info("network.Reconcile exit")
 
-	result, err := r.ensureVirtualNetwork(net)
-	if err != nil {
+	if result, err := r.ensureVirtualNetwork(net); err != nil {
+		return result, err
+	}
+
+	if result, err := r.ensureControlPlaneEndpoint(); err != nil {
 		return result, err
 	}
 	return reconcile.Result{}, nil
 }
 
 func (r *Reconciler) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
-	err := validateVirtualNetwork(net)
-	if err != nil {
+	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	_, err = r.vnet.Get(context.TODO())
-	if err != nil {
+	if _, err := r.vnet.Get(context.TODO()); err != nil {
 		switch err {
 		case provider.ErrNotFound:
-			r.log.Info("Creating VirtualNetwork", "vnet", err)
+			r.log.Info("Creating VirtualNetwork")
 			err := r.vnet.Update(context.TODO(), net)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		default:
+			r.log.Info("default", "err", err)
+			return reconcile.Result{}, err
+		}
+	}
+	return reconcile.Result{}, nil
+}
+
+func (r *Reconciler) ensureControlPlaneEndpoint() (reconcile.Result, error) {
+	if err := r.cpe.Get(context.TODO(), "cpe-name"); err != nil {
+		switch err {
+		case provider.ErrNotFound:
+			r.log.Info("Creating ControlPlaneEndpoint")
+			err := r.cpe.Update(context.TODO(), "cpe-name")
 			if err != nil {
 				return reconcile.Result{}, err
 			}

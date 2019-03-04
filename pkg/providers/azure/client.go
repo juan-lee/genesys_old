@@ -15,13 +15,24 @@
 package azure
 
 import (
-	aznet "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/Azure/go-autorest/autorest"
 )
 
-func newVNETClient(subID string, a autorest.Authorizer) (aznet.VirtualNetworksClient, error) {
-	client := aznet.NewVirtualNetworksClient(subID)
+const (
+	userAgent string = "genesys"
+)
+
+func newVNETClient(subID string, a autorest.Authorizer) (network.VirtualNetworksClient, error) {
+	client := network.NewVirtualNetworksClient(subID)
 	client.Authorizer = a
-	client.AddToUserAgent("genesys")
+	client.AddToUserAgent(userAgent)
+	return client, nil
+}
+
+func newPublicIPClient(subID string, a autorest.Authorizer) (network.PublicIPAddressesClient, error) {
+	client := network.NewPublicIPAddressesClient(subID)
+	client.Authorizer = a
+	client.AddToUserAgent(userAgent)
 	return client, nil
 }

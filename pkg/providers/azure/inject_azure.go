@@ -34,13 +34,15 @@ func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.Reconciler, e
 	panic(wire.Build(
 		provideConfiguration,
 		provideAuthorizer,
-		vnetSet,
+		netSet,
 		network.ProvideReconciler,
 		cluster.ProvideReconciler,
 	))
 }
 
-var vnetSet = wire.NewSet(
+var netSet = wire.NewSet(
+	ProvideControlPlaneEndpoint,
+	wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)),
 	ProvideVirtualNetwork,
 	wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
 )

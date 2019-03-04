@@ -30,3 +30,9 @@ type VirtualNetwork interface {
 	Update(ctx context.Context, net v1alpha1.Network) error
 	Delete(ctx context.Context) error
 }
+
+type ControlPlaneEndpoint interface {
+	Get(ctx context.Context, name string) error
+	Update(ctx context.Context, name string) error
+	Delete(ctx context.Context, name string) error
+}

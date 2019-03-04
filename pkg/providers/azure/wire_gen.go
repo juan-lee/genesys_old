@@ -33,7 +33,11 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Reconciler, erro
 	if err != nil {
 		return nil, err
 	}
-	reconciler, err := network.ProvideReconciler(log, virtualNetwork)
+	controlPlaneEndpoint, err := ProvideControlPlaneEndpoint(log, authorizer, c)
+	if err != nil {
+		return nil, err
+	}
+	reconciler, err := network.ProvideReconciler(log, virtualNetwork, controlPlaneEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +50,8 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Reconciler, erro
 
 // inject_azure.go:
 
-var vnetSet = wire.NewSet(
-	ProvideVirtualNetwork, wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
+var netSet = wire.NewSet(
+	ProvideControlPlaneEndpoint, wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)), ProvideVirtualNetwork, wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
 )
 
 func provideConfiguration() (Configuration, error) {
