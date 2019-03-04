@@ -12,35 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cluster
+package azure
 
 import (
 	"github.com/go-logr/logr"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/network"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/cluster"
 )
 
-var _ Reconciler = &ClusterReconciler{}
-
-type ClusterReconciler struct {
-	log     logr.Logger
-	network network.Reconciler
-}
-
-func ProvideReconciler(log logr.Logger, net network.Reconciler) (Reconciler, error) {
-	return &ClusterReconciler{
-		log:     log,
-		network: net,
-	}, nil
-}
-
-func (r *ClusterReconciler) Reconcile(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
-	r.log.Info("cluster.Reconcile enter")
-	defer r.log.Info("cluster.Reconcile exit")
-	result, err := r.network.Reconcile(desired.Spec.Network)
-	if err != nil {
-		return result, err
-	}
-	return reconcile.Result{}, nil
+func NewCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.Reconciler, error) {
+	return InjectCluster(log, c)
 }

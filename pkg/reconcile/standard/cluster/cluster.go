@@ -12,29 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package network
+package cluster
 
 import (
-	"context"
-
+	"github.com/go-logr/logr"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/network"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type Reconciler interface {
-	Reconcile(k8sv1alpha1.Network) (reconcile.Result, error)
+type Reconciler struct {
+	log     logr.Logger
+	network *network.Reconciler
 }
 
-// Func is a function that implements the reconcile interface.
-type Func func(k8sv1alpha1.Network) (reconcile.Result, error)
+func ProvideReconciler(log logr.Logger, net *network.Reconciler) (*Reconciler, error) {
+	return &Reconciler{
+		log:     log,
+		network: net,
+	}, nil
+}
 
-var _ Reconciler = Func(nil)
-
-// Reconcile implements Reconciler.
-func (r Func) Reconcile(o k8sv1alpha1.Network) (reconcile.Result, error) { return r(o) }
-
-type Provider interface {
-	State(ctx context.Context, desired k8sv1alpha1.Network) error
-	Update(ctx context.Context, desired k8sv1alpha1.Network) error
-	Delete(ctx context.Context) error
+func (r *Reconciler) Reconcile(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+	r.log.Info("cluster.Reconcile enter")
+	defer r.log.Info("cluster.Reconcile exit")
+	result, err := r.network.Reconcile(desired.Spec.Network)
+	if err != nil {
+		return result, err
+	}
+	return reconcile.Result{}, nil
 }

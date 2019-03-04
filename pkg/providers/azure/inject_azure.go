@@ -25,19 +25,25 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
-	"github.com/juan-lee/genesys/pkg/reconcile/network"
+	"github.com/juan-lee/genesys/pkg/reconcile/provider"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/cluster"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/network"
 )
 
-func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (cluster.Reconciler, error) {
+func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.Reconciler, error) {
 	panic(wire.Build(
 		provideConfiguration,
 		provideAuthorizer,
-		ProvideNetwork,
+		vnetSet,
 		network.ProvideReconciler,
 		cluster.ProvideReconciler,
 	))
 }
+
+var vnetSet = wire.NewSet(
+	ProvideVirtualNetwork,
+	wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
+)
 
 func provideConfiguration() (Configuration, error) {
 	return Configuration{

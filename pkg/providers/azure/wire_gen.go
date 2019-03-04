@@ -10,15 +10,17 @@ import (
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/go-logr/logr"
+	"github.com/google/wire"
 	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
-	"github.com/juan-lee/genesys/pkg/reconcile/network"
+	"github.com/juan-lee/genesys/pkg/reconcile/provider"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/cluster"
+	"github.com/juan-lee/genesys/pkg/reconcile/standard/network"
 	"os"
 )
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (cluster.Reconciler, error) {
+func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Reconciler, error) {
 	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
@@ -27,11 +29,11 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (cluster.Reconciler, error
 	if err != nil {
 		return nil, err
 	}
-	provider, err := ProvideNetwork(log, authorizer, c)
+	virtualNetwork, err := ProvideVirtualNetwork(log, authorizer, c)
 	if err != nil {
 		return nil, err
 	}
-	reconciler, err := network.ProvideReconciler(log, provider)
+	reconciler, err := network.ProvideReconciler(log, virtualNetwork)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +45,10 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (cluster.Reconciler, error
 }
 
 // inject_azure.go:
+
+var vnetSet = wire.NewSet(
+	ProvideVirtualNetwork, wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
+)
 
 func provideConfiguration() (Configuration, error) {
 	return Configuration{

@@ -24,8 +24,8 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/go-logr/logr"
-	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/network"
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"github.com/juan-lee/genesys/pkg/reconcile/provider"
 )
 
 const (
@@ -34,40 +34,41 @@ const (
 	defaultSubnetName         = "k8s-subnet"
 )
 
-var _ network.Provider = &networkProvider{}
+var _ provider.VirtualNetwork = &VirtualNetwork{}
 
-type networkProvider struct {
+type VirtualNetwork struct {
 	log    logr.Logger
-	config k8sv1alpha1.Cloud
+	config v1alpha1.Cloud
 	client aznet.VirtualNetworksClient
 }
 
-func ProvideNetwork(log logr.Logger, a autorest.Authorizer, c k8sv1alpha1.Cloud) (network.Provider, error) {
+func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud) (*VirtualNetwork, error) {
 	client, err := newVNETClient(c.SubscriptionID, a)
 	if err != nil {
 		return nil, err
 	}
-	return &networkProvider{
+	return &VirtualNetwork{
 		log:    log,
 		config: c,
 		client: client,
 	}, nil
 }
 
-func (r *networkProvider) State(ctx context.Context, desired k8sv1alpha1.Network) error {
+func (r *VirtualNetwork) Get(ctx context.Context) (*v1alpha1.Network, error) {
 	vnet, err := r.client.Get(ctx, r.config.ResourceGroup, r.vnetName(), "")
 	if err != nil {
-		return err
+		if derr, ok := err.(autorest.DetailedError); ok && derr.StatusCode == 404 {
+			return nil, provider.ErrNotFound
+		}
+		return nil, err
 	}
 
-	if !r.reachedDesiredState(&desired, &vnet) {
-		return errors.New("OutOfSync")
-	}
+	result := convert(&vnet)
 
-	return nil
+	return &result, nil
 }
 
-func (r *networkProvider) Update(ctx context.Context, desired k8sv1alpha1.Network) error {
+func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) error {
 	err := r.validate(&desired)
 	if err != nil {
 		return err
@@ -93,15 +94,15 @@ func (r *networkProvider) Update(ctx context.Context, desired k8sv1alpha1.Networ
 	return err
 }
 
-func (r *networkProvider) Delete(ctx context.Context) error {
+func (r *VirtualNetwork) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (r *networkProvider) vnetName() string {
+func (r *VirtualNetwork) vnetName() string {
 	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
 }
 
-func (r *networkProvider) validate(desired *k8sv1alpha1.Network) error {
+func (r *VirtualNetwork) validate(desired *v1alpha1.Network) error {
 	if desired == nil {
 		return errors.New("desired cannot be nil")
 	}
@@ -119,7 +120,7 @@ func (r *networkProvider) validate(desired *k8sv1alpha1.Network) error {
 	return nil
 }
 
-func (r *networkProvider) reachedDesiredState(desired *k8sv1alpha1.Network, current *aznet.VirtualNetwork) bool {
+func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current *aznet.VirtualNetwork) bool {
 	if current.Location == nil || *current.Location != r.config.Location {
 		r.log.Info("location is not in sync", "location", current.Location)
 		return false
@@ -128,8 +129,8 @@ func (r *networkProvider) reachedDesiredState(desired *k8sv1alpha1.Network, curr
 	return reflect.DeepEqual(*desired, convert(current))
 }
 
-func convert(in *aznet.VirtualNetwork) k8sv1alpha1.Network {
-	out := k8sv1alpha1.Network{}
+func convert(in *aznet.VirtualNetwork) v1alpha1.Network {
+	out := v1alpha1.Network{}
 
 	if in != nil &&
 		in.VirtualNetworkPropertiesFormat != nil &&

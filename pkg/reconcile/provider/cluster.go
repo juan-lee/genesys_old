@@ -12,14 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package azure
+package provider
 
 import (
-	"github.com/go-logr/logr"
-	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/cluster"
+	"context"
+	"errors"
+
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-func NewCluster(log logr.Logger, c k8sv1alpha1.Cloud) (cluster.Reconciler, error) {
-	return InjectCluster(log, c)
+var (
+	ErrNotFound = errors.New("resource not found")
+)
+
+type VirtualNetwork interface {
+	Get(ctx context.Context) (*v1alpha1.Network, error)
+	Update(ctx context.Context, net v1alpha1.Network) error
+	Delete(ctx context.Context) error
 }
