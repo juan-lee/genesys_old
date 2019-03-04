@@ -16,6 +16,7 @@ package network
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-logr/logr"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
@@ -35,16 +36,29 @@ func ProvideReconciler(log logr.Logger, vnet provider.VirtualNetwork) (*Reconcil
 	}, nil
 }
 
-func (r *Reconciler) Reconcile(desired v1alpha1.Network) (reconcile.Result, error) {
+func (r *Reconciler) Reconcile(net v1alpha1.Network) (reconcile.Result, error) {
 	r.log.Info("network.Reconcile enter")
 	defer r.log.Info("network.Reconcile exit")
 
-	_, err := r.vnet.Get(context.TODO())
+	result, err := r.ensureVirtualNetwork(net)
+	if err != nil {
+		return result, err
+	}
+	return reconcile.Result{}, nil
+}
+
+func (r *Reconciler) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
+	err := validateVirtualNetwork(net)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	_, err = r.vnet.Get(context.TODO())
 	if err != nil {
 		switch err {
 		case provider.ErrNotFound:
-			r.log.Info("Updating", "err", err)
-			err := r.vnet.Update(context.TODO(), desired)
+			r.log.Info("Creating VirtualNetwork", "vnet", err)
+			err := r.vnet.Update(context.TODO(), net)
 			if err != nil {
 				return reconcile.Result{}, err
 			}
@@ -54,4 +68,16 @@ func (r *Reconciler) Reconcile(desired v1alpha1.Network) (reconcile.Result, erro
 		}
 	}
 	return reconcile.Result{}, nil
+}
+
+func validateVirtualNetwork(net v1alpha1.Network) error {
+	if net.CIDR == "" {
+		return errors.New("CIDR cannot be empty")
+	}
+
+	if net.SubnetCIDR == "" {
+		return errors.New("SubnetCIDR cannot be empty")
+	}
+
+	return nil
 }

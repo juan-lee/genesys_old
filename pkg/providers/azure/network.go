@@ -95,6 +95,10 @@ func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) e
 }
 
 func (r *VirtualNetwork) Delete(ctx context.Context) error {
+	_, err := r.client.Delete(ctx, r.config.ResourceGroup, r.vnetName())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
