@@ -16,7 +16,7 @@ package azure
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/juan-lee/genesys/pkg/actuator/standard/cluster"
+	"github.com/juan-lee/genesys/pkg/actuator/cluster"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 

@@ -16,8 +16,8 @@ package profile
 
 import (
 	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/standard/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/standard/network"
+	"github.com/juan-lee/genesys/pkg/actuator/cluster"
+	"github.com/juan-lee/genesys/pkg/actuator/network"
 )
 
 var SelfManaged = wire.NewSet(
