@@ -21,22 +21,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type Reconciler struct {
+type Actuator struct {
 	log     logr.Logger
-	network *network.Reconciler
+	network *network.Actuator
 }
 
-func ProvideReconciler(log logr.Logger, net *network.Reconciler) (*Reconciler, error) {
-	return &Reconciler{
+func ProvideActuator(log logr.Logger, net *network.Actuator) (*Actuator, error) {
+	return &Actuator{
 		log:     log,
 		network: net,
 	}, nil
 }
 
-func (r *Reconciler) Reconcile(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
-	r.log.Info("cluster.Reconcile enter")
-	defer r.log.Info("cluster.Reconcile exit")
-	result, err := r.network.Reconcile(desired.Spec.Network)
+func (r *Actuator) Update(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+	r.log.Info("cluster.Update enter")
+	defer r.log.Info("cluster.Update exit")
+	result, err := r.network.Update(desired.Spec.Network)
 	if err != nil {
 		return result, err
 	}

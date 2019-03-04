@@ -96,7 +96,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	result, err := cluster.Reconcile(*instance)
+	result, err := cluster.Update(*instance)
 	if err != nil {
 		return result, err
 	}

@@ -24,22 +24,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type Reconciler struct {
+type Actuator struct {
 	log  logr.Logger
 	vnet provider.VirtualNetwork
 	cpe  provider.ControlPlaneEndpoint
 }
 
-func ProvideReconciler(log logr.Logger, vnet provider.VirtualNetwork, cpe provider.ControlPlaneEndpoint) (*Reconciler, error) {
-	return &Reconciler{
+func ProvideActuator(log logr.Logger, vnet provider.VirtualNetwork, cpe provider.ControlPlaneEndpoint) (*Actuator, error) {
+	return &Actuator{
 		log:  log,
 		vnet: vnet,
 	}, nil
 }
 
-func (r *Reconciler) Reconcile(net v1alpha1.Network) (reconcile.Result, error) {
-	r.log.Info("network.Reconcile enter")
-	defer r.log.Info("network.Reconcile exit")
+func (r *Actuator) Update(net v1alpha1.Network) (reconcile.Result, error) {
+	r.log.Info("network.Update enter")
+	defer r.log.Info("network.Update exit")
 
 	if result, err := r.ensureVirtualNetwork(net); err != nil {
 		return result, err
@@ -51,7 +51,7 @@ func (r *Reconciler) Reconcile(net v1alpha1.Network) (reconcile.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Actuator) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
 	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -72,7 +72,7 @@ func (r *Reconciler) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Resul
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) ensureControlPlaneEndpoint() (reconcile.Result, error) {
+func (r *Actuator) ensureControlPlaneEndpoint() (reconcile.Result, error) {
 	if err := r.cpe.Get(context.TODO(), "cpe-name"); err != nil {
 		switch err {
 		case provider.ErrNotFound:

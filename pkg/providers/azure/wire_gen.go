@@ -20,7 +20,7 @@ import (
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Reconciler, error) {
+func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Actuator, error) {
 	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
@@ -37,15 +37,15 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Reconciler, erro
 	if err != nil {
 		return nil, err
 	}
-	reconciler, err := network.ProvideReconciler(log, virtualNetwork, controlPlaneEndpoint)
+	actuator, err := network.ProvideActuator(log, virtualNetwork, controlPlaneEndpoint)
 	if err != nil {
 		return nil, err
 	}
-	clusterReconciler, err := cluster.ProvideReconciler(log, reconciler)
+	clusterActuator, err := cluster.ProvideActuator(log, actuator)
 	if err != nil {
 		return nil, err
 	}
-	return clusterReconciler, nil
+	return clusterActuator, nil
 }
 
 // inject_azure.go:
