@@ -16,8 +16,8 @@ package cluster
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/standard/network"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/standard/network"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 

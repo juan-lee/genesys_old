@@ -16,8 +16,8 @@ package azure
 
 import (
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/standard/cluster"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/standard/cluster"
 )
 
 func NewCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.Reconciler, error) {

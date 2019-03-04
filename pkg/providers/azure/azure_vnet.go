@@ -23,8 +23,8 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/provider"
 )
 
 const (

@@ -11,10 +11,10 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
+	"github.com/juan-lee/genesys/pkg/actuator/standard/cluster"
+	"github.com/juan-lee/genesys/pkg/actuator/standard/network"
 	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/provider"
-	"github.com/juan-lee/genesys/pkg/reconcile/standard/cluster"
-	"github.com/juan-lee/genesys/pkg/reconcile/standard/network"
 	"os"
 )
 

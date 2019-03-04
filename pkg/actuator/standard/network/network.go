@@ -19,8 +19,8 @@ import (
 	"errors"
 
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/provider"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 

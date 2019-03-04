@@ -20,8 +20,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/reconcile/provider"
 )
 
 var _ provider.ControlPlaneEndpoint = &ControlPlaneEndpoint{}

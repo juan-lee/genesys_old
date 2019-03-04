@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package reconcile contains APIs for reconciling resources
-package reconcile
+// Package actuator contains APIs for controlling resources
+package actuator
