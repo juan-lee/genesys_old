@@ -24,9 +24,9 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
+	"github.com/juan-lee/genesys/pkg/actuator/profile"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	"github.com/juan-lee/genesys/pkg/actuator/standard/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/standard/network"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
@@ -35,8 +35,7 @@ func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.Actuator, err
 		provideConfiguration,
 		provideAuthorizer,
 		netSet,
-		network.ProvideActuator,
-		cluster.ProvideActuator,
+		profile.SelfManaged,
 	))
 }
 
