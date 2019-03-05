@@ -20,7 +20,7 @@ import (
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Actuator, error) {
+func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
@@ -29,23 +29,20 @@ func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.Actuator, error)
 	if err != nil {
 		return nil, err
 	}
-	virtualNetwork, err := ProvideVirtualNetwork(log, authorizer, c)
+	azureNames := providePrefixedNames(c)
+	virtualNetwork, err := ProvideVirtualNetwork(log, authorizer, c, azureNames)
 	if err != nil {
 		return nil, err
 	}
-	controlPlaneEndpoint, err := ProvideControlPlaneEndpoint(log, authorizer, c)
+	flat, err := network.ProvideFlatNetwork(log, virtualNetwork)
 	if err != nil {
 		return nil, err
 	}
-	actuator, err := network.ProvideActuator(log, virtualNetwork, controlPlaneEndpoint)
+	selfManaged, err := cluster.ProvideSelfManaged(log, flat)
 	if err != nil {
 		return nil, err
 	}
-	clusterActuator, err := cluster.ProvideActuator(log, actuator)
-	if err != nil {
-		return nil, err
-	}
-	return clusterActuator, nil
+	return selfManaged, nil
 }
 
 // inject_azure.go:

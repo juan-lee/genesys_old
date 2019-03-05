@@ -12,15 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package profile
+package azure
 
 import (
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/network"
+	"fmt"
+
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-var SelfManaged = wire.NewSet(
-	network.ProvideFlatNetwork,
-	cluster.ProvideSelfManaged,
-)
+type names struct {
+	prefix string
+}
+
+func providePrefixedNames(c v1alpha1.Cloud) *names {
+	return &names{prefix: c.ResourceGroup}
+}
+
+func (n names) VirtualNetwork() string {
+	return fmt.Sprintf("%s-vnet", n.prefix)
+}
+
+func (n names) Subnet() string {
+	return fmt.Sprintf("%s-subnet", n.prefix)
+}
+
+func (n names) NetworkSecurityGroup() string {
+	return fmt.Sprintf("%s-nsg", n.prefix)
+}

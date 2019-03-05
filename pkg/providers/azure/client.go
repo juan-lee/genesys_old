@@ -36,3 +36,10 @@ func newPublicIPClient(subID string, a autorest.Authorizer) (network.PublicIPAdd
 	client.AddToUserAgent(userAgent)
 	return client, nil
 }
+
+func newNSGClient(subID string, a autorest.Authorizer) (network.SecurityGroupsClient, error) {
+	client := network.NewSecurityGroupsClient(subID)
+	client.Authorizer = a
+	client.AddToUserAgent(userAgent)
+	return client, nil
+}

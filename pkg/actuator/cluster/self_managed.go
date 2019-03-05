@@ -12,15 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package profile
+package cluster
 
 import (
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
+	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
+	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-var SelfManaged = wire.NewSet(
-	network.ProvideFlatNetwork,
-	cluster.ProvideSelfManaged,
-)
+type SelfManaged struct {
+	log     logr.Logger
+	network *network.Flat
+}
+
+func ProvideSelfManaged(log logr.Logger, net *network.Flat) (*SelfManaged, error) {
+	return &SelfManaged{
+		log:     log,
+		network: net,
+	}, nil
+}
+
+func (r *SelfManaged) Update(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+	r.log.Info("cluster.Update enter")
+	defer r.log.Info("cluster.Update exit")
+	result, err := r.network.Update(desired.Spec.Network)
+	if err != nil {
+		return result, err
+	}
+	return reconcile.Result{}, nil
+}

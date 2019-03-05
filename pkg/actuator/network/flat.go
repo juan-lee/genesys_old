@@ -16,6 +16,7 @@ package network
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
@@ -23,34 +24,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type Actuator struct {
+type Flat struct {
 	log  logr.Logger
 	vnet provider.VirtualNetwork
-	cpe  provider.ControlPlaneEndpoint
 }
 
-func ProvideActuator(log logr.Logger, vnet provider.VirtualNetwork, cpe provider.ControlPlaneEndpoint) (*Actuator, error) {
-	return &Actuator{
+func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetwork) (*Flat, error) {
+	return &Flat{
 		log:  log,
 		vnet: vnet,
 	}, nil
 }
 
-func (r *Actuator) Update(net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Flat) Update(net v1alpha1.Network) (reconcile.Result, error) {
 	r.log.Info("network.Update enter")
 	defer r.log.Info("network.Update exit")
 
 	if result, err := r.ensureVirtualNetwork(net); err != nil {
 		return result, err
 	}
-
-	if result, err := r.ensureControlPlaneEndpoint(); err != nil {
-		return result, err
-	}
 	return reconcile.Result{}, nil
 }
 
-func (r *Actuator) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Flat) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
 	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -71,19 +67,14 @@ func (r *Actuator) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result,
 	return reconcile.Result{}, nil
 }
 
-func (r *Actuator) ensureControlPlaneEndpoint() (reconcile.Result, error) {
-	if err := r.cpe.Get(context.TODO(), "cpe-name"); err != nil {
-		switch err {
-		case provider.ErrNotFound:
-			r.log.Info("Creating ControlPlaneEndpoint")
-			err := r.cpe.Update(context.TODO(), "cpe-name")
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		default:
-			r.log.Info("default", "err", err)
-			return reconcile.Result{}, err
-		}
+func validateVirtualNetwork(net v1alpha1.Network) error {
+	if net.CIDR == "" {
+		return errors.New("CIDR cannot be empty")
 	}
-	return reconcile.Result{}, nil
+
+	if net.SubnetCIDR == "" {
+		return errors.New("SubnetCIDR cannot be empty")
+	}
+
+	return nil
 }

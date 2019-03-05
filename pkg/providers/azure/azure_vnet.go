@@ -16,8 +16,6 @@ package azure
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/Azure/go-autorest/autorest"
@@ -27,19 +25,16 @@ import (
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-const (
-	defaultSubnetName = "k8s-subnet"
-)
-
 var _ provider.VirtualNetwork = &VirtualNetwork{}
 
 type VirtualNetwork struct {
 	log    logr.Logger
 	config v1alpha1.Cloud
+	names  *names
 	client network.VirtualNetworksClient
 }
 
-func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud) (*VirtualNetwork, error) {
+func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetwork, error) {
 	client, err := newVNETClient(c.SubscriptionID, a)
 	if err != nil {
 		return nil, err
@@ -47,12 +42,13 @@ func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cl
 	return &VirtualNetwork{
 		log:    log,
 		config: c,
+		names:  n,
 		client: client,
 	}, nil
 }
 
 func (r *VirtualNetwork) Get(ctx context.Context) (*v1alpha1.Network, error) {
-	vnet, err := r.client.Get(ctx, r.config.ResourceGroup, r.vnetName(), "")
+	vnet, err := r.client.Get(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(), "")
 	if err != nil {
 		if derr, ok := err.(autorest.DetailedError); ok && derr.StatusCode == 404 {
 			return nil, provider.ErrNotFound
@@ -66,7 +62,7 @@ func (r *VirtualNetwork) Get(ctx context.Context) (*v1alpha1.Network, error) {
 }
 
 func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) error {
-	_, err := r.client.CreateOrUpdate(ctx, r.config.ResourceGroup, r.vnetName(),
+	_, err := r.client.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(),
 		network.VirtualNetwork{
 			Location: to.StringPtr(r.config.Location),
 			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
@@ -75,7 +71,7 @@ func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) e
 				},
 				Subnets: &[]network.Subnet{
 					{
-						Name: to.StringPtr(defaultSubnetName),
+						Name: to.StringPtr(r.names.Subnet()),
 						SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
 							AddressPrefix: to.StringPtr(desired.SubnetCIDR),
 						},
@@ -87,24 +83,11 @@ func (r *VirtualNetwork) Update(ctx context.Context, desired v1alpha1.Network) e
 }
 
 func (r *VirtualNetwork) Delete(ctx context.Context) error {
-	_, err := r.client.Delete(ctx, r.config.ResourceGroup, r.vnetName())
+	_, err := r.client.Delete(ctx, r.config.ResourceGroup, r.names.VirtualNetwork())
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (r *VirtualNetwork) vnetName() string {
-	return fmt.Sprintf("%s-vnet", r.config.ResourceGroup)
-}
-
-func (r *VirtualNetwork) reachedDesiredState(desired *v1alpha1.Network, current *network.VirtualNetwork) bool {
-	if current.Location == nil || *current.Location != r.config.Location {
-		r.log.Info("location is not in sync", "location", current.Location)
-		return false
-	}
-
-	return reflect.DeepEqual(*desired, convert(current))
 }
 
 func convert(in *network.VirtualNetwork) v1alpha1.Network {

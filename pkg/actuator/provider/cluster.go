@@ -25,14 +25,30 @@ var (
 	ErrNotFound = errors.New("resource not found")
 )
 
-type VirtualNetwork interface {
-	Get(ctx context.Context) (*v1alpha1.Network, error)
-	Update(ctx context.Context, net v1alpha1.Network) error
-	Delete(ctx context.Context) error
+type Names interface {
+	VirtualNetwork() string
 }
 
 type ControlPlaneEndpoint interface {
 	Get(ctx context.Context, name string) error
 	Update(ctx context.Context, name string) error
 	Delete(ctx context.Context, name string) error
+}
+
+type SecurityGroupRule struct {
+}
+
+type NetworkSecurityGroupOptions struct {
+}
+
+type NetworkSecurityGroup interface {
+	Get(ctx context.Context) error
+	Update(ctx context.Context) error
+	Delete(ctx context.Context) error
+}
+
+type VirtualNetwork interface {
+	Get(ctx context.Context) (*v1alpha1.Network, error)
+	Update(ctx context.Context, net v1alpha1.Network) error
+	Delete(ctx context.Context) error
 }
