@@ -15,6 +15,8 @@
 package cluster
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
@@ -33,12 +35,17 @@ func ProvideSelfManaged(log logr.Logger, net *network.Flat) (*SelfManaged, error
 	}, nil
 }
 
-func (r *SelfManaged) Update(desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+func (r *SelfManaged) Ensure(ctx context.Context, desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
 	r.log.Info("cluster.Update enter")
 	defer r.log.Info("cluster.Update exit")
-	result, err := r.network.Update(desired.Spec.Network)
+	result, err := r.network.Ensure(ctx, desired.Spec.Network)
 	if err != nil {
 		return result, err
 	}
+	return reconcile.Result{}, nil
+}
+
+func (r *SelfManaged) EnsureDeleted(ctx context.Context, desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
+	// TODO
 	return reconcile.Result{}, nil
 }

@@ -12,14 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package azure
+package provider
 
-import (
-	"github.com/go-logr/logr"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
-	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-)
+import "fmt"
 
-func NewSelfManaged(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
-	return InjectCluster(log, c)
+type ProvisioningInProgress struct {
+	Op string
+}
+
+func Provisioning(op string) error {
+	return &ProvisioningInProgress{Op: op}
+}
+
+func (e *ProvisioningInProgress) Error() string {
+	return fmt.Sprintf("Provisioning %s", e.Op)
 }

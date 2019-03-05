@@ -19,61 +19,23 @@ import (
 	"errors"
 
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var (
 	ErrNotFound = errors.New("resource not found")
 )
 
-type Names interface {
-	VirtualNetwork() string
-}
-
 type ControlPlaneEndpoint interface {
-	Get(ctx context.Context, name string) error
-	Update(ctx context.Context, name string) error
-	Delete(ctx context.Context, name string) error
-}
-
-type SecurityGroupRule struct {
-}
-
-type NetworkSecurityGroupOptions struct {
+	Ensure(ctx context.Context, ep string) error
+	EnsureDeleted(ctx context.Context, ep string) error
 }
 
 type NetworkSecurityGroup interface {
-	Get(ctx context.Context) error
-	Update(ctx context.Context) error
-	Delete(ctx context.Context) error
+	Ensure(ctx context.Context, net v1alpha1.Network) error
+	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }
 
 type VirtualNetwork interface {
-	Get(ctx context.Context) (*v1alpha1.Network, error)
-	Update(ctx context.Context, net v1alpha1.Network) error
-	Delete(ctx context.Context) error
-}
-
-type Result struct {
-	reconcile.Result
-}
-
-const (
-	Succeeded    State = "Succeeded"
-	Failed       State = "Failed"
-	Provisioning State = "Provisioning"
-	Deleting     State = "Deleting"
-	Deleted      State = "Deleted"
-)
-
-type State string
-
-type Status struct {
-	State   State
-	Message string
-}
-
-type FlatNetwork interface {
-	Ensure(ctx context.Context, net v1alpha1.Network) (*Status, error)
-	EnsureDeleted(ctx context.Context, net v1alpha1.Network) (*Status, error)
+	Ensure(ctx context.Context, net v1alpha1.Network) error
+	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }

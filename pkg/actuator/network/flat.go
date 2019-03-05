@@ -17,6 +17,7 @@ package network
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
@@ -36,34 +37,26 @@ func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetwork) (*Flat, e
 	}, nil
 }
 
-func (r *Flat) Update(net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Flat) Ensure(ctx context.Context, net v1alpha1.Network) (reconcile.Result, error) {
 	r.log.Info("network.Update enter")
 	defer r.log.Info("network.Update exit")
 
-	if result, err := r.ensureVirtualNetwork(net); err != nil {
-		return result, err
-	}
-	return reconcile.Result{}, nil
-}
-
-func (r *Flat) ensureVirtualNetwork(net v1alpha1.Network) (reconcile.Result, error) {
 	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	if _, err := r.vnet.Get(context.TODO()); err != nil {
-		switch err {
-		case provider.ErrNotFound:
-			r.log.Info("Creating VirtualNetwork")
-			err := r.vnet.Update(context.TODO(), net)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-		default:
-			r.log.Info("default", "err", err)
-			return reconcile.Result{}, err
+	if err := r.vnet.Ensure(ctx, net); err != nil {
+		switch err.(type) {
+		case *provider.ProvisioningInProgress:
+			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
 		}
+		return reconcile.Result{}, err
 	}
+	return reconcile.Result{}, nil
+}
+
+func (r *Flat) EnsureDeleted(ctx context.Context, net v1alpha1.Network) (reconcile.Result, error) {
+	// TODO
 	return reconcile.Result{}, nil
 }
 

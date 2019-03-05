@@ -44,46 +44,10 @@ func ProvideControlPlaneEndpoint(log logr.Logger, a autorest.Authorizer, c v1alp
 	}, nil
 }
 
-func (cpe *ControlPlaneEndpoint) Get(ctx context.Context, name string) error {
-	_, err := cpe.client.Get(ctx, cpe.config.ResourceGroup, name, "")
-	if err != nil {
-		if derr, ok := err.(autorest.DetailedError); ok && derr.StatusCode == 404 {
-			return provider.ErrNotFound
-		}
-		return err
-	}
+func (cpe *ControlPlaneEndpoint) Ensure(ctx context.Context, ep string) error {
 	return nil
 }
 
-func (cpe *ControlPlaneEndpoint) Update(ctx context.Context, name string) error {
-	f, err := cpe.client.CreateOrUpdate(ctx, cpe.config.ResourceGroup, name, network.PublicIPAddress{
-		Name:     &name,
-		Location: &cpe.config.Location,
-		PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
-			PublicIPAddressVersion:   network.IPv4,
-			PublicIPAllocationMethod: network.Static,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = f.WaitForCompletionRef(ctx, cpe.client.Client)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (cpe *ControlPlaneEndpoint) Delete(ctx context.Context, name string) error {
-	f, err := cpe.client.Delete(ctx, cpe.config.ResourceGroup, name)
-	if err != nil {
-		return err
-	}
-
-	err = f.WaitForCompletionRef(ctx, cpe.client.Client)
-	if err != nil {
-		return err
-	}
+func (cpe *ControlPlaneEndpoint) EnsureDeleted(ctx context.Context, ep string) error {
 	return nil
 }

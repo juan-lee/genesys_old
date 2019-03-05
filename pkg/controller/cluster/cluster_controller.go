@@ -91,12 +91,12 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	cluster, err := azure.NewCluster(log, instance.Spec.Cloud)
+	cluster, err := azure.NewSelfManaged(log, instance.Spec.Cloud)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	result, err := cluster.Update(*instance)
+	result, err := cluster.Ensure(context.TODO(), *instance)
 	if err != nil {
 		return result, err
 	}
