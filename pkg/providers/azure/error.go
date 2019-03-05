@@ -14,32 +14,11 @@
 
 package azure
 
-import (
-	"fmt"
+import "github.com/Azure/go-autorest/autorest"
 
-	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-)
-
-type names struct {
-	prefix string
-}
-
-func providePrefixedNames(c v1alpha1.Cloud) *names {
-	return &names{prefix: c.ResourceGroup}
-}
-
-func (n names) VirtualNetwork() string {
-	return fmt.Sprintf("%s-vnet", n.prefix)
-}
-
-func (n names) Subnet() string {
-	return fmt.Sprintf("%s-subnet", n.prefix)
-}
-
-func (n names) NetworkSecurityGroup() string {
-	return fmt.Sprintf("%s-nsg", n.prefix)
-}
-
-func (n names) RouteTable() string {
-	return fmt.Sprintf("%s-rt", n.prefix)
+func IsNotFound(err error) bool {
+	if derr, ok := err.(autorest.DetailedError); ok && derr.StatusCode == 404 {
+		return true
+	}
+	return false
 }

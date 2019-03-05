@@ -43,3 +43,10 @@ func newNSGClient(subID string, a autorest.Authorizer) (network.SecurityGroupsCl
 	client.AddToUserAgent(userAgent)
 	return client, nil
 }
+
+func newRouteTableClient(subID string, a autorest.Authorizer) (network.RouteTablesClient, error) {
+	client := network.NewRouteTablesClient(subID)
+	client.Authorizer = a
+	client.AddToUserAgent(userAgent)
+	return client, nil
+}

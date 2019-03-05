@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var (
@@ -51,4 +52,28 @@ type VirtualNetwork interface {
 	Get(ctx context.Context) (*v1alpha1.Network, error)
 	Update(ctx context.Context, net v1alpha1.Network) error
 	Delete(ctx context.Context) error
+}
+
+type Result struct {
+	reconcile.Result
+}
+
+const (
+	Succeeded    State = "Succeeded"
+	Failed       State = "Failed"
+	Provisioning State = "Provisioning"
+	Deleting     State = "Deleting"
+	Deleted      State = "Deleted"
+)
+
+type State string
+
+type Status struct {
+	State   State
+	Message string
+}
+
+type FlatNetwork interface {
+	Ensure(ctx context.Context, net v1alpha1.Network) (*Status, error)
+	EnsureDeleted(ctx context.Context, net v1alpha1.Network) (*Status, error)
 }
