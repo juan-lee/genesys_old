@@ -30,11 +30,11 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 		return nil, err
 	}
 	azureNames := providePrefixedNames(c)
-	virtualNetworkFactory, err := ProvideVirtualNetworkFactory(log, authorizer, c, azureNames)
+	azureVirtualNetworkFactory, err := provideVirtualNetworkFactory(log, authorizer, c, azureNames)
 	if err != nil {
 		return nil, err
 	}
-	flat, err := network.ProvideFlatNetwork(log, virtualNetworkFactory)
+	flat, err := network.ProvideFlatNetwork(log, azureVirtualNetworkFactory)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 // inject_azure.go:
 
 var netSet = wire.NewSet(
-	ProvideControlPlaneEndpoint, wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)), ProvideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(VirtualNetworkFactory)),
+	ProvideControlPlaneEndpoint, wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)), provideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
 )
 
 func provideConfiguration() (*Configuration, error) {

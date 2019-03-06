@@ -26,16 +26,17 @@ import (
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-var _ provider.VirtualNetwork = &VirtualNetwork{}
+var _ provider.Provider = &virtualNetwork{}
+var _ provider.VirtualNetworkFactory = &virtualNetworkFactory{}
 
-type VirtualNetworkFactory struct {
+type virtualNetworkFactory struct {
 	log    logr.Logger
 	config *v1alpha1.Cloud
 	names  *names
 	auth   autorest.Authorizer
 }
 
-type VirtualNetwork struct {
+type virtualNetwork struct {
 	log        logr.Logger
 	config     *v1alpha1.Cloud
 	names      *names
@@ -46,23 +47,24 @@ type VirtualNetwork struct {
 	rtClient   network.RouteTablesClient
 }
 
-func ProvideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c *v1alpha1.Cloud, n *names) (*VirtualNetworkFactory, error) {
-	return &VirtualNetworkFactory{
+func provideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c *v1alpha1.Cloud, n *names) (*virtualNetworkFactory, error) {
+	return &virtualNetworkFactory{
 		log:    log,
 		config: c,
 		names:  n,
+		auth:   a,
 	}, nil
 }
 
-func (r *VirtualNetworkFactory) Get(ctx context.Context, net *v1alpha1.Network) (provider.Reconciler, error) {
-	vnet, err := NewVirtualNetwork(ctx, r, net)
+func (f *virtualNetworkFactory) Get(ctx context.Context, net *v1alpha1.Network) (provider.Reconciler, error) {
+	vnet, err := newVirtualNetwork(ctx, f, net)
 	if err != nil {
 		return nil, err
 	}
 	return &Reconciler{Provider: vnet}, nil
 }
 
-func NewVirtualNetwork(ctx context.Context, f *VirtualNetworkFactory, desired *v1alpha1.Network) (*VirtualNetwork, error) {
+func newVirtualNetwork(ctx context.Context, f *virtualNetworkFactory, desired *v1alpha1.Network) (*virtualNetwork, error) {
 	vnetClient, err := newVNETClient(f.config.SubscriptionID, f.auth)
 	if err != nil {
 		return nil, err
@@ -81,136 +83,119 @@ func NewVirtualNetwork(ctx context.Context, f *VirtualNetworkFactory, desired *v
 	} else if err != nil && !IsNotFound(err) {
 		return nil, err
 	}
-	return &VirtualNetwork{
+	return &virtualNetwork{
 		log:        f.log,
 		config:     f.config,
 		names:      f.names,
 		vnet:       current,
+		desired:    desired,
 		vnetClient: vnetClient,
 		sgClient:   sgClient,
 		rtClient:   rtClient,
 	}, nil
 }
 
-func (r *VirtualNetwork) Exists() bool {
-	if r.vnet == nil {
-		return true
+func (vn *virtualNetwork) Exists() bool {
+	if vn.vnet == nil {
+		return false
 	}
-	return false
+	return true
 }
 
-func (r *VirtualNetwork) Status() provider.Status {
-	if r.Exists() {
-		switch *r.vnet.ProvisioningState {
-		case "Succeeded":
-			return provider.Succeeded
-		case "Provisioning":
-			return provider.Provisioning
-		case "Deleting":
-			return provider.Provisioning
+func (vn *virtualNetwork) Status() provider.Status {
+	if !vn.Exists() {
+		return provider.NeedsUpdate
+	}
+
+	if vn.vnet.ProvisioningState == nil {
+		return provider.Unknown
+	}
+
+	switch *vn.vnet.ProvisioningState {
+	case "Succeeded":
+		return provider.Succeeded
+	case "Provisioning":
+		return provider.Provisioning
+	case "Deleting":
+		return provider.Provisioning
+	}
+
+	return provider.Unknown
+}
+
+func (vn *virtualNetwork) Update(ctx context.Context) error {
+	if vn.Exists() {
+		if !reflect.DeepEqual(*vn.desired, convert(vn.vnet)) {
+			vn.vnet.Location = &vn.config.Location
+			// TODO: probably dangerous without nil checks
+			(*vn.vnet.AddressSpace.AddressPrefixes)[0] = vn.desired.CIDR
+			(*vn.vnet.AddressSpace.AddressPrefixes)[0] = vn.desired.CIDR
+			(*vn.vnet.Subnets)[0].Name = to.StringPtr(vn.names.Subnet())
+			(*vn.vnet.Subnets)[0].AddressPrefix = &vn.desired.SubnetCIDR
+			_, err := vn.vnetClient.CreateOrUpdate(ctx, vn.config.ResourceGroup, vn.names.VirtualNetwork(), *vn.vnet)
+			if err != nil {
+				return err
+			}
 		}
-	}
-	return provider.Succeeded
-}
-
-func (r *VirtualNetwork) Update(ctx context.Context) error {
-	if r.Exists() {
+		return nil
 	}
 
-	return r.create(ctx, r.desired)
+	return vn.create(ctx, vn.desired)
 }
 
-func (r *VirtualNetwork) Delete(ctx context.Context) error {
-	_, err := r.vnetClient.Delete(ctx, r.config.ResourceGroup, r.names.VirtualNetwork())
+func (vn *virtualNetwork) Delete(ctx context.Context) error {
+	_, err := vn.vnetClient.Delete(ctx, vn.config.ResourceGroup, vn.names.VirtualNetwork())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *VirtualNetwork) Ensure(ctx context.Context, net *v1alpha1.Network) error {
-	vnet, err := r.vnetClient.Get(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(), "")
-	if err != nil && IsNotFound(err) {
-		if err := r.create(ctx, net); err != nil {
-			return err
-		}
-		return r.statusProvisioning()
-	} else if err != nil {
-		return err
-	}
-
-	if vnet.ProvisioningState != nil && *vnet.ProvisioningState == "Provisioning" {
-		return r.statusProvisioning()
-	}
-
-	if !reflect.DeepEqual(net, convert(&vnet)) {
-		vnet.Location = &r.config.Location
-		// TODO: probably dangerous without nil checks
-		(*vnet.AddressSpace.AddressPrefixes)[0] = net.CIDR
-		(*vnet.AddressSpace.AddressPrefixes)[0] = net.CIDR
-		(*vnet.Subnets)[0].Name = to.StringPtr(r.names.Subnet())
-		(*vnet.Subnets)[0].AddressPrefix = &net.SubnetCIDR
-		_, err := r.vnetClient.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(), vnet)
-		if err != nil {
-			return err
-		}
-		return r.statusProvisioning()
-	}
-
-	return nil
-}
-
-func (r *VirtualNetwork) EnsureDeleted(ctx context.Context, net *v1alpha1.Network) error {
-	_, err := r.vnetClient.Delete(ctx, r.config.ResourceGroup, r.names.VirtualNetwork())
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *VirtualNetwork) create(ctx context.Context, net *v1alpha1.Network) error {
-	sgf, err := r.sgClient.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.NetworkSecurityGroup(), network.SecurityGroup{
-		Location: &r.config.Location,
+func (vn *virtualNetwork) create(ctx context.Context, net *v1alpha1.Network) error {
+	sgf, err := vn.sgClient.CreateOrUpdate(ctx, vn.config.ResourceGroup, vn.names.NetworkSecurityGroup(), network.SecurityGroup{
+		Location: &vn.config.Location,
 	})
 	if err != nil {
 		return err
 	}
 
-	err = sgf.WaitForCompletionRef(ctx, r.sgClient.Client)
+	err = sgf.WaitForCompletionRef(ctx, vn.sgClient.Client)
 	if err != nil {
 		return err
 	}
 
-	sg, err := sgf.Result(r.sgClient)
+	sg, err := sgf.Result(vn.sgClient)
 	if err != nil {
 		return err
 	}
 
-	rtf, err := r.rtClient.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.RouteTable(), network.RouteTable{})
+	rtf, err := vn.rtClient.CreateOrUpdate(ctx, vn.config.ResourceGroup, vn.names.RouteTable(), network.RouteTable{
+		Location: &vn.config.Location,
+	})
 	if err != nil {
 		return err
 	}
 
-	err = rtf.WaitForCompletionRef(ctx, r.rtClient.Client)
+	err = rtf.WaitForCompletionRef(ctx, vn.rtClient.Client)
 	if err != nil {
 		return err
 	}
 
-	rt, err := rtf.Result(r.rtClient)
+	rt, err := rtf.Result(vn.rtClient)
 	if err != nil {
 		return err
 	}
 
-	f, err := r.vnetClient.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(),
+	f, err := vn.vnetClient.CreateOrUpdate(ctx, vn.config.ResourceGroup, vn.names.VirtualNetwork(),
 		network.VirtualNetwork{
-			Location: &r.config.Location,
+			Location: &vn.config.Location,
 			VirtualNetworkPropertiesFormat: &network.VirtualNetworkPropertiesFormat{
 				AddressSpace: &network.AddressSpace{
 					AddressPrefixes: &[]string{net.CIDR},
 				},
 				Subnets: &[]network.Subnet{
 					{
-						Name: to.StringPtr(r.names.Subnet()),
+						Name: to.StringPtr(vn.names.Subnet()),
 						SubnetPropertiesFormat: &network.SubnetPropertiesFormat{
 							AddressPrefix:        to.StringPtr(net.SubnetCIDR),
 							NetworkSecurityGroup: &sg,
@@ -224,15 +209,11 @@ func (r *VirtualNetwork) create(ctx context.Context, net *v1alpha1.Network) erro
 		return err
 	}
 
-	err = f.WaitForCompletionRef(ctx, r.vnetClient.Client)
+	err = f.WaitForCompletionRef(ctx, vn.vnetClient.Client)
 	if err != nil {
 		return err
 	}
 	return err
-}
-
-func (r *VirtualNetwork) statusProvisioning() error {
-	return provider.Pending("VirtualNetwork")
 }
 
 func convert(in *network.VirtualNetwork) v1alpha1.Network {

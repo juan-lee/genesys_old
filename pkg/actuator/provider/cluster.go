@@ -35,11 +35,6 @@ type NetworkSecurityGroup interface {
 	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }
 
-type VirtualNetwork interface {
-	Ensure(ctx context.Context, net *v1alpha1.Network) error
-	EnsureDeleted(ctx context.Context, net *v1alpha1.Network) error
-}
-
 type Status string
 
 const (
@@ -48,6 +43,7 @@ const (
 	Provisioning Status = "Provisioning"
 	Deleting     Status = "Deleting"
 	Deleted      Status = "Deleted"
+	Unknown      Status = "Unknown"
 )
 
 type Provider interface {
