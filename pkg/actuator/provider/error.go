@@ -20,7 +20,7 @@ type ProvisioningInProgress struct {
 	Op string
 }
 
-func Provisioning(op string) error {
+func Pending(op string) error {
 	return &ProvisioningInProgress{Op: op}
 }
 

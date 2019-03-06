@@ -27,10 +27,10 @@ import (
 
 type Flat struct {
 	log  logr.Logger
-	vnet provider.VirtualNetwork
+	vnet provider.VirtualNetworkFactory
 }
 
-func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetwork) (*Flat, error) {
+func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetworkFactory) (*Flat, error) {
 	return &Flat{
 		log:  log,
 		vnet: vnet,
@@ -44,8 +44,11 @@ func (r *Flat) Ensure(ctx context.Context, net v1alpha1.Network) (reconcile.Resu
 	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
-
-	if err := r.vnet.Ensure(ctx, net); err != nil {
+	rec, err := r.vnet.Get(ctx, net)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if err := rec.Ensure(ctx); err != nil {
 		switch err.(type) {
 		case *provider.ProvisioningInProgress:
 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil

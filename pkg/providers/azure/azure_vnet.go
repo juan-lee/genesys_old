@@ -28,16 +28,40 @@ import (
 
 var _ provider.VirtualNetwork = &VirtualNetwork{}
 
+type VirtualNetworkFactory struct {
+	log    logr.Logger
+	config v1alpha1.Cloud
+	names  *names
+	auth   autorest.Authorizer
+}
+
 type VirtualNetwork struct {
 	log        logr.Logger
 	config     v1alpha1.Cloud
 	names      *names
+	vnet       *network.VirtualNetwork
 	vnetClient network.VirtualNetworksClient
 	sgClient   network.SecurityGroupsClient
 	rtClient   network.RouteTablesClient
 }
 
-func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetwork, error) {
+func ProvideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetworkFactory, error) {
+	return &VirtualNetworkFactory{
+		log:    log,
+		config: c,
+		names:  n,
+	}, nil
+}
+
+func (r *VirtualNetworkFactory) Get(ctx context.Context, net v1alpha1.Network) (provider.Reconciler, error) {
+	vnet, err := NewVirtualNetwork(ctx, r.log, r.auth, r.config, r.names)
+	if err != nil {
+		return nil, err
+	}
+	return &Reconciler{Provider: vnet}, nil
+}
+
+func NewVirtualNetwork(ctx context.Context, log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetwork, error) {
 	vnetClient, err := newVNETClient(c.SubscriptionID, a)
 	if err != nil {
 		return nil, err
@@ -50,14 +74,48 @@ func ProvideVirtualNetwork(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cl
 	if err != nil {
 		return nil, err
 	}
+	var current *network.VirtualNetwork
+	if vnet, err := vnetClient.Get(ctx, c.ResourceGroup, n.VirtualNetwork(), ""); err == nil {
+		current = &vnet
+	} else if err != nil && !IsNotFound(err) {
+		return nil, err
+	}
 	return &VirtualNetwork{
 		log:        log,
 		config:     c,
 		names:      n,
+		vnet:       current,
 		vnetClient: vnetClient,
 		sgClient:   sgClient,
 		rtClient:   rtClient,
 	}, nil
+}
+
+func (r *VirtualNetwork) Exists() bool {
+	if r.vnet == nil {
+		return true
+	}
+	return false
+}
+
+func (r *VirtualNetwork) Status() provider.Status {
+	if r.Exists() {
+		switch *r.vnet.ProvisioningState {
+		case "Succeeded":
+			return provider.Succeeded
+		case "Provisioning":
+			return provider.Provisioning
+		}
+	}
+	return provider.Succeeded
+}
+
+func (r *VirtualNetwork) Update(ctx context.Context) error {
+	return nil
+}
+
+func (r *VirtualNetwork) Delete(ctx context.Context) error {
+	return nil
 }
 
 func (r *VirtualNetwork) Ensure(ctx context.Context, net v1alpha1.Network) error {
@@ -164,7 +222,7 @@ func (r *VirtualNetwork) create(ctx context.Context, net v1alpha1.Network) error
 }
 
 func (r *VirtualNetwork) statusProvisioning() error {
-	return provider.Provisioning("VirtualNetwork")
+	return provider.Pending("VirtualNetwork")
 }
 
 func convert(in *network.VirtualNetwork) v1alpha1.Network {

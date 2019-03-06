@@ -43,8 +43,8 @@ func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.SelfManaged, 
 var netSet = wire.NewSet(
 	ProvideControlPlaneEndpoint,
 	wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)),
-	ProvideVirtualNetwork,
-	wire.Bind(new(provider.VirtualNetwork), new(VirtualNetwork)),
+	ProvideVirtualNetworkFactory,
+	wire.Bind(new(provider.VirtualNetworkFactory), new(VirtualNetworkFactory)),
 )
 
 func provideConfiguration() (Configuration, error) {

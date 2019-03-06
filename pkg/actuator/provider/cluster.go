@@ -39,3 +39,29 @@ type VirtualNetwork interface {
 	Ensure(ctx context.Context, net v1alpha1.Network) error
 	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }
+
+type Status string
+
+const (
+	NeedsUpdate  Status = "NeedsUpdate"
+	Succeeded    Status = "Succeeded"
+	Provisioning Status = "Provisioning"
+	Deleting     Status = "Deleting"
+	Deleted      Status = "Deleted"
+)
+
+type Provider interface {
+	Exists() bool
+	Status() Status
+	Update(ctx context.Context) error
+	Delete(ctx context.Context) error
+}
+
+type Reconciler interface {
+	Ensure(ctx context.Context) error
+	EnsureDeleted(ctx context.Context) error
+}
+
+type VirtualNetworkFactory interface {
+	Get(ctx context.Context, net v1alpha1.Network) (Reconciler, error)
+}
