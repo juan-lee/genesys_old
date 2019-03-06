@@ -36,8 +36,8 @@ type NetworkSecurityGroup interface {
 }
 
 type VirtualNetwork interface {
-	Ensure(ctx context.Context, net v1alpha1.Network) error
-	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
+	Ensure(ctx context.Context, net *v1alpha1.Network) error
+	EnsureDeleted(ctx context.Context, net *v1alpha1.Network) error
 }
 
 type Status string
@@ -63,5 +63,5 @@ type Reconciler interface {
 }
 
 type VirtualNetworkFactory interface {
-	Get(ctx context.Context, net v1alpha1.Network) (Reconciler, error)
+	Get(ctx context.Context, net *v1alpha1.Network) (Reconciler, error)
 }

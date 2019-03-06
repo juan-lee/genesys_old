@@ -38,7 +38,7 @@ func ProvideSelfManaged(log logr.Logger, net *network.Flat) (*SelfManaged, error
 func (r *SelfManaged) Ensure(ctx context.Context, desired k8sv1alpha1.Cluster) (reconcile.Result, error) {
 	r.log.Info("cluster.Update enter")
 	defer r.log.Info("cluster.Update exit")
-	result, err := r.network.Ensure(ctx, desired.Spec.Network)
+	result, err := r.network.Ensure(ctx, &desired.Spec.Network)
 	if err != nil {
 		return result, err
 	}

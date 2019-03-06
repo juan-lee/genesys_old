@@ -20,7 +20,7 @@ import (
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(log logr.Logger, c v1alpha1.Cloud) (*cluster.SelfManaged, error) {
+func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
@@ -51,8 +51,8 @@ var netSet = wire.NewSet(
 	ProvideControlPlaneEndpoint, wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)), ProvideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(VirtualNetworkFactory)),
 )
 
-func provideConfiguration() (Configuration, error) {
-	return Configuration{
+func provideConfiguration() (*Configuration, error) {
+	return &Configuration{
 		Cloud:        "AzurePublicCloud",
 		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
 		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
@@ -60,7 +60,7 @@ func provideConfiguration() (Configuration, error) {
 	}, nil
 }
 
-func provideAuthorizer(log logr.Logger, c Configuration) (autorest.Authorizer, error) {
+func provideAuthorizer(log logr.Logger, c *Configuration) (autorest.Authorizer, error) {
 	env, err := azure.EnvironmentFromName(c.Cloud)
 	if err != nil {
 		return nil, err

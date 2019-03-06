@@ -20,6 +20,6 @@ import (
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-func NewSelfManaged(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
+func NewSelfManaged(log logr.Logger, c *k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	return InjectCluster(log, c)
 }

@@ -30,7 +30,7 @@ import (
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
-func InjectCluster(log logr.Logger, c k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
+func InjectCluster(log logr.Logger, c *k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	panic(wire.Build(
 		providePrefixedNames,
 		provideConfiguration,
@@ -47,8 +47,8 @@ var netSet = wire.NewSet(
 	wire.Bind(new(provider.VirtualNetworkFactory), new(VirtualNetworkFactory)),
 )
 
-func provideConfiguration() (Configuration, error) {
-	return Configuration{
+func provideConfiguration() (*Configuration, error) {
+	return &Configuration{
 		Cloud:        "AzurePublicCloud",
 		ClientID:     os.Getenv("AZURE_CLIENT_ID"),
 		ClientSecret: os.Getenv("AZURE_CLIENT_SECRET"),
@@ -56,7 +56,7 @@ func provideConfiguration() (Configuration, error) {
 	}, nil
 }
 
-func provideAuthorizer(log logr.Logger, c Configuration) (autorest.Authorizer, error) {
+func provideAuthorizer(log logr.Logger, c *Configuration) (autorest.Authorizer, error) {
 	env, err := azure.EnvironmentFromName(c.Cloud)
 	if err != nil {
 		return nil, err

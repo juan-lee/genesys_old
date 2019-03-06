@@ -37,7 +37,7 @@ func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetworkFactory) (*
 	}, nil
 }
 
-func (r *Flat) Ensure(ctx context.Context, net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Flat) Ensure(ctx context.Context, net *v1alpha1.Network) (reconcile.Result, error) {
 	r.log.Info("network.Update enter")
 	defer r.log.Info("network.Update exit")
 
@@ -58,12 +58,12 @@ func (r *Flat) Ensure(ctx context.Context, net v1alpha1.Network) (reconcile.Resu
 	return reconcile.Result{}, nil
 }
 
-func (r *Flat) EnsureDeleted(ctx context.Context, net v1alpha1.Network) (reconcile.Result, error) {
+func (r *Flat) EnsureDeleted(ctx context.Context, net *v1alpha1.Network) (reconcile.Result, error) {
 	// TODO
 	return reconcile.Result{}, nil
 }
 
-func validateVirtualNetwork(net v1alpha1.Network) error {
+func validateVirtualNetwork(net *v1alpha1.Network) error {
 	if net.CIDR == "" {
 		return errors.New("CIDR cannot be empty")
 	}

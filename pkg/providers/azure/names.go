@@ -24,7 +24,7 @@ type names struct {
 	prefix string
 }
 
-func providePrefixedNames(c v1alpha1.Cloud) *names {
+func providePrefixedNames(c *v1alpha1.Cloud) *names {
 	return &names{prefix: c.ResourceGroup}
 }
 

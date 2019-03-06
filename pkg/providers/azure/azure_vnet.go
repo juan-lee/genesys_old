@@ -30,22 +30,23 @@ var _ provider.VirtualNetwork = &VirtualNetwork{}
 
 type VirtualNetworkFactory struct {
 	log    logr.Logger
-	config v1alpha1.Cloud
+	config *v1alpha1.Cloud
 	names  *names
 	auth   autorest.Authorizer
 }
 
 type VirtualNetwork struct {
 	log        logr.Logger
-	config     v1alpha1.Cloud
+	config     *v1alpha1.Cloud
 	names      *names
 	vnet       *network.VirtualNetwork
+	desired    *v1alpha1.Network
 	vnetClient network.VirtualNetworksClient
 	sgClient   network.SecurityGroupsClient
 	rtClient   network.RouteTablesClient
 }
 
-func ProvideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetworkFactory, error) {
+func ProvideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c *v1alpha1.Cloud, n *names) (*VirtualNetworkFactory, error) {
 	return &VirtualNetworkFactory{
 		log:    log,
 		config: c,
@@ -53,37 +54,37 @@ func ProvideVirtualNetworkFactory(log logr.Logger, a autorest.Authorizer, c v1al
 	}, nil
 }
 
-func (r *VirtualNetworkFactory) Get(ctx context.Context, net v1alpha1.Network) (provider.Reconciler, error) {
-	vnet, err := NewVirtualNetwork(ctx, r.log, r.auth, r.config, r.names)
+func (r *VirtualNetworkFactory) Get(ctx context.Context, net *v1alpha1.Network) (provider.Reconciler, error) {
+	vnet, err := NewVirtualNetwork(ctx, r, net)
 	if err != nil {
 		return nil, err
 	}
 	return &Reconciler{Provider: vnet}, nil
 }
 
-func NewVirtualNetwork(ctx context.Context, log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*VirtualNetwork, error) {
-	vnetClient, err := newVNETClient(c.SubscriptionID, a)
+func NewVirtualNetwork(ctx context.Context, f *VirtualNetworkFactory, desired *v1alpha1.Network) (*VirtualNetwork, error) {
+	vnetClient, err := newVNETClient(f.config.SubscriptionID, f.auth)
 	if err != nil {
 		return nil, err
 	}
-	sgClient, err := newNSGClient(c.SubscriptionID, a)
+	sgClient, err := newNSGClient(f.config.SubscriptionID, f.auth)
 	if err != nil {
 		return nil, err
 	}
-	rtClient, err := newRouteTableClient(c.SubscriptionID, a)
+	rtClient, err := newRouteTableClient(f.config.SubscriptionID, f.auth)
 	if err != nil {
 		return nil, err
 	}
 	var current *network.VirtualNetwork
-	if vnet, err := vnetClient.Get(ctx, c.ResourceGroup, n.VirtualNetwork(), ""); err == nil {
+	if vnet, err := vnetClient.Get(ctx, f.config.ResourceGroup, f.names.VirtualNetwork(), ""); err == nil {
 		current = &vnet
 	} else if err != nil && !IsNotFound(err) {
 		return nil, err
 	}
 	return &VirtualNetwork{
-		log:        log,
-		config:     c,
-		names:      n,
+		log:        f.log,
+		config:     f.config,
+		names:      f.names,
 		vnet:       current,
 		vnetClient: vnetClient,
 		sgClient:   sgClient,
@@ -105,20 +106,29 @@ func (r *VirtualNetwork) Status() provider.Status {
 			return provider.Succeeded
 		case "Provisioning":
 			return provider.Provisioning
+		case "Deleting":
+			return provider.Provisioning
 		}
 	}
 	return provider.Succeeded
 }
 
 func (r *VirtualNetwork) Update(ctx context.Context) error {
-	return nil
+	if r.Exists() {
+	}
+
+	return r.create(ctx, r.desired)
 }
 
 func (r *VirtualNetwork) Delete(ctx context.Context) error {
+	_, err := r.vnetClient.Delete(ctx, r.config.ResourceGroup, r.names.VirtualNetwork())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *VirtualNetwork) Ensure(ctx context.Context, net v1alpha1.Network) error {
+func (r *VirtualNetwork) Ensure(ctx context.Context, net *v1alpha1.Network) error {
 	vnet, err := r.vnetClient.Get(ctx, r.config.ResourceGroup, r.names.VirtualNetwork(), "")
 	if err != nil && IsNotFound(err) {
 		if err := r.create(ctx, net); err != nil {
@@ -150,7 +160,7 @@ func (r *VirtualNetwork) Ensure(ctx context.Context, net v1alpha1.Network) error
 	return nil
 }
 
-func (r *VirtualNetwork) EnsureDeleted(ctx context.Context, net v1alpha1.Network) error {
+func (r *VirtualNetwork) EnsureDeleted(ctx context.Context, net *v1alpha1.Network) error {
 	_, err := r.vnetClient.Delete(ctx, r.config.ResourceGroup, r.names.VirtualNetwork())
 	if err != nil {
 		return err
@@ -158,7 +168,7 @@ func (r *VirtualNetwork) EnsureDeleted(ctx context.Context, net v1alpha1.Network
 	return nil
 }
 
-func (r *VirtualNetwork) create(ctx context.Context, net v1alpha1.Network) error {
+func (r *VirtualNetwork) create(ctx context.Context, net *v1alpha1.Network) error {
 	sgf, err := r.sgClient.CreateOrUpdate(ctx, r.config.ResourceGroup, r.names.NetworkSecurityGroup(), network.SecurityGroup{
 		Location: &r.config.Location,
 	})
