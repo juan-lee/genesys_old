@@ -238,3 +238,19 @@ func convert(in *network.VirtualNetwork) v1alpha1.Network {
 
 	return out
 }
+
+func (p *Provider) GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network) (exists bool, err error) {
+	panic("not implemented")
+}
+
+func (p *Provider) EnsureVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error {
+	panic("not implemented")
+}
+
+func (p *Provider) UpdateVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error {
+	panic("not implemented")
+}
+
+func (p *Provider) EnsureVirtualNetworkDeleted(ctx context.Context, net *v1alpha1.Network) error {
+	panic("not implemented")
+}

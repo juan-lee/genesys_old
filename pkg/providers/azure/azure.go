@@ -15,10 +15,26 @@
 package azure
 
 import (
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/cluster"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
+
+var _ provider.Interface = (*Provider)(nil)
+
+type Provider struct {
+	log        logr.Logger
+	config     *v1alpha1.Cloud
+	names      *names
+	vnetClient network.VirtualNetworksClient
+}
+
+func (p *Provider) VirtualNetwork() (provider.VirtualNetwork, bool) {
+	return p, true
+}
 
 func NewSelfManaged(log logr.Logger, c *k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	return InjectCluster(log, c)

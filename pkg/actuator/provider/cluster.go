@@ -60,3 +60,14 @@ type NetworkSecurityGroup interface {
 	Ensure(ctx context.Context, net v1alpha1.Network) error
 	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }
+
+type VirtualNetwork interface {
+	GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network) (exists bool, err error)
+	EnsureVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error
+	UpdateVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error
+	EnsureVirtualNetworkDeleted(ctx context.Context, net *v1alpha1.Network) error
+}
+
+type Interface interface {
+	VirtualNetwork() (VirtualNetwork, bool)
+}
