@@ -44,10 +44,12 @@ func (r *Flat) Ensure(ctx context.Context, net *v1alpha1.Network) (reconcile.Res
 	if err := validateVirtualNetwork(net); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	rec, err := r.vnet.Get(ctx, net)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err := rec.Ensure(ctx); err != nil {
 		switch err.(type) {
 		case *provider.ProvisioningInProgress:

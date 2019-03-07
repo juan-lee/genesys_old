@@ -61,7 +61,7 @@ func (f *virtualNetworkFactory) Get(ctx context.Context, net *v1alpha1.Network) 
 	if err != nil {
 		return nil, err
 	}
-	return &Reconciler{Provider: vnet}, nil
+	return &Reconciler{log: f.log, Provider: vnet}, nil
 }
 
 func newVirtualNetwork(ctx context.Context, f *virtualNetworkFactory, desired *v1alpha1.Network) (*virtualNetwork, error) {

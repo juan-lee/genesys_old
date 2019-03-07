@@ -12,6 +12,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
 	"github.com/juan-lee/genesys/pkg/actuator/cluster"
+	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
@@ -38,7 +39,15 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 	if err != nil {
 		return nil, err
 	}
-	selfManaged, err := cluster.ProvideSelfManaged(log, flat)
+	azureControlPlaneEndpointFactory, err := provideControlPlaneEndpointFactory(log, authorizer, c, azureNames)
+	if err != nil {
+		return nil, err
+	}
+	singleInstance, err := controlplane.ProvideSingleInstance(log, azureControlPlaneEndpointFactory)
+	if err != nil {
+		return nil, err
+	}
+	selfManaged, err := cluster.ProvideSelfManaged(log, flat, singleInstance)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +56,12 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 
 // inject_azure.go:
 
+var cpSet = wire.NewSet(
+	provideControlPlaneEndpointFactory, wire.Bind(new(provider.ControlPlaneEndpointFactory), new(controlPlaneEndpointFactory)),
+)
+
 var netSet = wire.NewSet(
-	ProvideControlPlaneEndpoint, wire.Bind(new(provider.ControlPlaneEndpoint), new(ControlPlaneEndpoint)), provideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
+	provideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
 )
 
 func provideConfiguration() (*Configuration, error) {

@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -26,9 +27,10 @@ import (
 type SelfManaged struct {
 	log     logr.Logger
 	network *network.Flat
+	cp      *controlplane.SingleInstance
 }
 
-func ProvideSelfManaged(log logr.Logger, net *network.Flat) (*SelfManaged, error) {
+func ProvideSelfManaged(log logr.Logger, net *network.Flat, cp *controlplane.SingleInstance) (*SelfManaged, error) {
 	return &SelfManaged{
 		log:     log,
 		network: net,
@@ -39,6 +41,11 @@ func (r *SelfManaged) Ensure(ctx context.Context, desired k8sv1alpha1.Cluster) (
 	r.log.Info("cluster.Update enter")
 	defer r.log.Info("cluster.Update exit")
 	result, err := r.network.Ensure(ctx, &desired.Spec.Network)
+	if err != nil {
+		return result, err
+	}
+
+	result, err = r.cp.Ensure(ctx, &desired.Spec.ControlPlane)
 	if err != nil {
 		return result, err
 	}

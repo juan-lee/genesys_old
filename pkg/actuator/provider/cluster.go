@@ -25,16 +25,6 @@ var (
 	ErrNotFound = errors.New("resource not found")
 )
 
-type ControlPlaneEndpoint interface {
-	Ensure(ctx context.Context, ep string) error
-	EnsureDeleted(ctx context.Context, ep string) error
-}
-
-type NetworkSecurityGroup interface {
-	Ensure(ctx context.Context, net v1alpha1.Network) error
-	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
-}
-
 type Status string
 
 const (
@@ -58,6 +48,15 @@ type Reconciler interface {
 	EnsureDeleted(ctx context.Context) error
 }
 
+type ControlPlaneEndpointFactory interface {
+	Get(ctx context.Context, cp *v1alpha1.ControlPlane) (Reconciler, error)
+}
+
 type VirtualNetworkFactory interface {
 	Get(ctx context.Context, net *v1alpha1.Network) (Reconciler, error)
+}
+
+type NetworkSecurityGroup interface {
+	Ensure(ctx context.Context, net v1alpha1.Network) error
+	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
 }

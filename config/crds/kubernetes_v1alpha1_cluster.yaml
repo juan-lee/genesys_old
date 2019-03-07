@@ -37,6 +37,11 @@ spec:
                 subscriptionID:
                   type: string
               type: object
+            controlplane:
+              properties:
+                fqdn:
+                  type: string
+              type: object
             network:
               properties:
                 cidr:

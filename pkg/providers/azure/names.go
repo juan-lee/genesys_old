@@ -43,3 +43,7 @@ func (n names) NetworkSecurityGroup() string {
 func (n names) RouteTable() string {
 	return fmt.Sprintf("%s-rt", n.prefix)
 }
+
+func (n names) ControlPlaneEndpoint() string {
+	return fmt.Sprintf("%s-cp-ip", n.prefix)
+}

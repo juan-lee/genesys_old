@@ -31,8 +31,9 @@ type ClusterPhase string
 
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
-	Cloud   Cloud   `json:"cloud,omitempty"`
-	Network Network `json:"network,omitempty"`
+	Cloud        Cloud        `json:"cloud,omitempty"`
+	ControlPlane ControlPlane `json:"controlplane,omitempty"`
+	Network      Network      `json:"network,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
@@ -63,17 +64,22 @@ type ClusterList struct {
 	Items           []Cluster `json:"items"`
 }
 
-// Network is the Schema for cluster networking
-type Network struct {
-	CIDR       string `json:"cidr,omitempty"`
-	SubnetCIDR string `json:"subnetCIDR,omitempty"`
-}
-
 // Cloud is the Schema for cluster cloud configuration
 type Cloud struct {
 	SubscriptionID string `json:"subscriptionID,omitempty"`
 	ResourceGroup  string `json:"resourceGroup,omitempty"`
 	Location       string `json:"location,omitempty"`
+}
+
+// ControlPlane is the Schema for a cluster's control plane
+type ControlPlane struct {
+	Fqdn string `json:"fqdn,omitempty"`
+}
+
+// Network is the Schema for cluster networking
+type Network struct {
+	CIDR       string `json:"cidr,omitempty"`
+	SubnetCIDR string `json:"subnetCIDR,omitempty"`
 }
 
 func init() {

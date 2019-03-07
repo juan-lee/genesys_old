@@ -16,20 +16,29 @@ package azure
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
+	"github.com/prometheus/common/log"
 )
 
 type Reconciler struct {
+	log      logr.Logger
 	Provider provider.Provider
 }
 
 func (r *Reconciler) Ensure(ctx context.Context) error {
+	log.Info("Reconciler.Ensure", "status", r.Provider.Status())
 	switch r.Provider.Status() {
-	case provider.NeedsUpdate:
-		return r.Provider.Update(ctx)
 	case provider.Provisioning:
-		return provider.Pending("Concrete")
+		return provider.Pending(fmt.Sprintf("%T", r.Provider))
+	case provider.NeedsUpdate:
+		err := r.Provider.Update(ctx)
+		if err != nil {
+			return err
+		}
+		return provider.Pending(fmt.Sprintf("%T", r.Provider))
 	case provider.Succeeded:
 		return nil
 	}
@@ -37,15 +46,16 @@ func (r *Reconciler) Ensure(ctx context.Context) error {
 }
 
 func (r *Reconciler) EnsureDeleted(ctx context.Context) error {
+	log.Info("Reconciler.Ensure", "status", r.Provider.Status())
 	switch r.Provider.Status() {
 	case provider.Deleting:
-		return provider.Pending("Concrete")
+		return provider.Pending(fmt.Sprintf("%T", r.Provider))
 	case provider.Succeeded:
 		err := r.Provider.Delete(ctx)
 		if err != nil {
 			return err
 		}
-		return provider.Pending("Concrete")
+		return provider.Pending(fmt.Sprintf("%T", r.Provider))
 	}
 	return nil
 }
