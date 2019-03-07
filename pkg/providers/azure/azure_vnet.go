@@ -30,7 +30,6 @@ func (p *Provider) GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network)
 	} else if err != nil {
 		return false, err
 	}
-
 	return true, nil
 }
 

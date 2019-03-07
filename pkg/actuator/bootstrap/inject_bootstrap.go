@@ -19,6 +19,7 @@ package bootstrap
 import (
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
+	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
@@ -31,6 +32,7 @@ func injectBootstrap(cloud *v1alpha1.Cloud) (*Bootstrap, error) {
 		provideLogger,
 		setupAzureProvider,
 		network.ProvideFlat,
+		controlplane.ProvideSingleInstance,
 		provideBootstrap,
 	))
 }
@@ -43,6 +45,6 @@ func setupAzureProvider(log logr.Logger, cloud *v1alpha1.Cloud) (provider.Interf
 	return azure.NewProvider(cloud)
 }
 
-func provideBootstrap(log logr.Logger, net *network.Flat) (*Bootstrap, error) {
-	return &Bootstrap{log: log, net: net}, nil
+func provideBootstrap(log logr.Logger, net *network.Flat, cp *controlplane.SingleInstance) (*Bootstrap, error) {
+	return &Bootstrap{log: log, net: net, cp: cp}, nil
 }

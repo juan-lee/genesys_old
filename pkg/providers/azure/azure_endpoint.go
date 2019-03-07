@@ -14,140 +14,101 @@
 
 package azure
 
-// import (
-// 	"context"
+import (
+	"context"
 
-// 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
-// 	"github.com/Azure/go-autorest/autorest"
-// 	"github.com/Azure/go-autorest/autorest/to"
-// 	"github.com/go-logr/logr"
-// 	"github.com/juan-lee/genesys/pkg/actuator/provider"
-// 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-// )
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
+	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+)
 
-// var _ provider.Provider = &controlPlaneEndpoint{}
-// var _ provider.ControlPlaneEndpointFactory = &controlPlaneEndpointFactory{}
+func (p *Provider) GetControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) (exists bool, err error) {
+	_, err = p.client.pip.Get(ctx, p.config.ResourceGroup, p.names.ControlPlaneEndpoint(), "")
+	if err != nil && IsNotFound(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 
-// type controlPlaneEndpointFactory struct {
-// 	log    logr.Logger
-// 	config *v1alpha1.Cloud
-// 	names  *names
-// 	auth   autorest.Authorizer
-// }
+func (p *Provider) EnsureControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) error {
+	f, err := p.client.pip.CreateOrUpdate(ctx, p.config.ResourceGroup, p.names.ControlPlaneEndpoint(), network.PublicIPAddress{
+		Sku: &network.PublicIPAddressSku{Name: network.PublicIPAddressSkuNameBasic},
+		PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
+			PublicIPAddressVersion:   network.IPv4,
+			PublicIPAllocationMethod: network.Static,
+			DNSSettings: &network.PublicIPAddressDNSSettings{
+				DomainNameLabel: to.StringPtr(p.names.ControlPlaneEndpoint()),
+				Fqdn:            to.StringPtr(cp.Fqdn),
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
 
-// type controlPlaneEndpoint struct {
-// 	log     logr.Logger
-// 	config  *v1alpha1.Cloud
-// 	names   *names
-// 	pip     *network.PublicIPAddress
-// 	desired *v1alpha1.ControlPlane
-// 	client  network.PublicIPAddressesClient
-// }
+	err = f.WaitForCompletionRef(ctx, p.client.pip.Client)
+	if err != nil {
+		return err
+	}
 
-// func provideControlPlaneEndpointFactory(log logr.Logger, a autorest.Authorizer, c *v1alpha1.Cloud, n *names) (*controlPlaneEndpointFactory, error) {
-// 	return &controlPlaneEndpointFactory{
-// 		log:    log,
-// 		config: c,
-// 		names:  n,
-// 		auth:   a,
-// 	}, nil
-// }
+	_, err = f.Result(p.client.pip)
+	if err != nil {
+		return err
+	}
 
-// func (f *controlPlaneEndpointFactory) Get(ctx context.Context, cp *v1alpha1.ControlPlane) (provider.Reconciler, error) {
-// 	pip, err := newControlPlaneEndpoint(ctx, f, cp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &Reconciler{log: f.log, Provider: pip}, nil
-// }
+	return nil
+}
 
-// func newControlPlaneEndpoint(ctx context.Context, f *controlPlaneEndpointFactory, cp *v1alpha1.ControlPlane) (*controlPlaneEndpoint, error) {
-// 	client, err := newPublicIPClient(f.config.SubscriptionID, f.auth)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var current *network.PublicIPAddress
-// 	if pip, err := client.Get(ctx, f.config.ResourceGroup, f.names.ControlPlaneEndpoint(), ""); err == nil {
-// 		current = &pip
-// 	} else if err != nil && !IsNotFound(err) {
-// 		return nil, err
-// 	}
-// 	return &controlPlaneEndpoint{
-// 		log:     f.log,
-// 		config:  f.config,
-// 		names:   f.names,
-// 		pip:     current,
-// 		desired: cp,
-// 		client:  client,
-// 	}, nil
-// }
+func (p *Provider) UpdateControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) error {
+	pip, err := p.client.pip.Get(ctx, p.config.ResourceGroup, p.names.ControlPlaneEndpoint(), "")
+	if err != nil && IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
 
-// func (c *controlPlaneEndpoint) Exists() bool {
-// 	if c.pip == nil {
-// 		return false
-// 	}
-// 	return true
-// }
+	// TODO: improve this conversion
+	pip.Location = &p.config.ResourceGroup
+	pip.Sku = &network.PublicIPAddressSku{Name: network.PublicIPAddressSkuNameBasic}
+	pip.PublicIPAddressVersion = network.IPv4
+	pip.PublicIPAllocationMethod = network.Static
+	pip.DNSSettings.DomainNameLabel = to.StringPtr(p.names.ControlPlaneEndpoint())
+	pip.DNSSettings.Fqdn = to.StringPtr(p.names.ControlPlaneEndpoint())
+	f, err := p.client.pip.CreateOrUpdate(ctx, p.config.ResourceGroup, p.names.ControlPlaneEndpoint(), pip)
+	if err != nil {
+		return err
+	}
 
-// func (c *controlPlaneEndpoint) Status() provider.Status {
-// 	if !c.Exists() {
-// 		return provider.NeedsUpdate
-// 	}
+	err = f.WaitForCompletionRef(ctx, p.client.pip.Client)
+	if err != nil {
+		return err
+	}
 
-// 	if c.pip.ProvisioningState == nil {
-// 		return provider.Unknown
-// 	}
+	_, err = f.Result(p.client.pip)
+	if err != nil {
+		return err
+	}
 
-// 	switch *c.pip.ProvisioningState {
-// 	case "Succeeded":
-// 		return provider.Succeeded
-// 	case "Provisioning":
-// 		return provider.Provisioning
-// 	case "Deleting":
-// 		return provider.Provisioning
-// 	}
+	return nil
+}
 
-// 	return provider.Unknown
-// }
+func (p *Provider) EnsureControlPlaneEndpointDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) error {
+	f, err := p.client.pip.Delete(ctx, p.config.ResourceGroup, p.names.ControlPlaneEndpoint())
+	if err != nil {
+		return err
+	}
 
-// func (c *controlPlaneEndpoint) Update(ctx context.Context) error {
-// 	if c.Exists() {
-// 		c.pip.Location = &c.config.ResourceGroup
-// 		c.pip.Sku = &network.PublicIPAddressSku{Name: network.PublicIPAddressSkuNameBasic}
-// 		c.pip.PublicIPAddressVersion = network.IPv4
-// 		c.pip.PublicIPAllocationMethod = network.Static
-// 		c.pip.DNSSettings.DomainNameLabel = to.StringPtr(c.names.ControlPlaneEndpoint())
-// 		c.pip.DNSSettings.Fqdn = to.StringPtr(c.names.ControlPlaneEndpoint())
-// 		_, err := c.client.CreateOrUpdate(ctx, c.config.ResourceGroup, c.names.ControlPlaneEndpoint(), *c.pip)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return nil
-// 	}
+	err = f.WaitForCompletionRef(ctx, p.client.pip.Client)
+	if err != nil {
+		return err
+	}
 
-// 	f, err := c.client.CreateOrUpdate(ctx, c.config.ResourceGroup, c.names.ControlPlaneEndpoint(), network.PublicIPAddress{
-// 		Sku: &network.PublicIPAddressSku{Name: network.PublicIPAddressSkuNameBasic},
-// 		PublicIPAddressPropertiesFormat: &network.PublicIPAddressPropertiesFormat{
-// 			PublicIPAddressVersion:   network.IPv4,
-// 			PublicIPAllocationMethod: network.Static,
-// 			DNSSettings: &network.PublicIPAddressDNSSettings{
-// 				DomainNameLabel: to.StringPtr(c.names.ControlPlaneEndpoint()),
-// 				Fqdn:            to.StringPtr(c.desired.Fqdn),
-// 			},
-// 		},
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
+	_, err = f.Result(p.client.pip)
+	if err != nil {
+		return err
+	}
 
-// 	err = f.WaitForCompletionRef(ctx, c.client.Client)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func (c *controlPlaneEndpoint) Delete(ctx context.Context) error {
-// 	panic("not implemented")
-// }
+	return nil
+}

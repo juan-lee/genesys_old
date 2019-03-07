@@ -56,10 +56,15 @@ func provideClient(log logr.Logger, cloud *v1alpha1.Cloud, a autorest.Authorizer
 	if err != nil {
 		return nil, err
 	}
+	pip, err := newPublicIPClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
 	return &client{
 		vnet: vnet,
 		nsg:  nsg,
 		rt:   rt,
+		pip:  pip,
 	}, nil
 }
 

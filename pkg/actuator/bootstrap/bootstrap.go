@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
 	"github.com/juan-lee/genesys/pkg/actuator/network"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
@@ -25,6 +26,7 @@ import (
 type Bootstrap struct {
 	log logr.Logger
 	net *network.Flat
+	cp  *controlplane.SingleInstance
 }
 
 func New(cloud *v1alpha1.Cloud) (*Bootstrap, error) {
@@ -57,6 +59,22 @@ func (b *Bootstrap) ensureNetwork(ctx context.Context, cluster *v1alpha1.Cluster
 
 func (b *Bootstrap) ensureNetworkDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
 	err := b.net.EnsureDeleted(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Bootstrap) ensureControlPlane(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.cp.Ensure(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Bootstrap) ensureControlPlaneDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.cp.EnsureDeleted(ctx, cluster)
 	if err != nil {
 		return err
 	}

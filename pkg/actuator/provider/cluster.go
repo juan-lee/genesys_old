@@ -20,6 +20,13 @@ import (
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
+type ControlPlaneEndpoint interface {
+	GetControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) (exists bool, err error)
+	EnsureControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	UpdateControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	EnsureControlPlaneEndpointDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) error
+}
+
 type VirtualNetwork interface {
 	GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network) (exists bool, err error)
 	EnsureVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error
@@ -29,4 +36,5 @@ type VirtualNetwork interface {
 
 type Interface interface {
 	VirtualNetwork() (VirtualNetwork, bool)
+	ControlPlaneEndpoint() (ControlPlaneEndpoint, bool)
 }

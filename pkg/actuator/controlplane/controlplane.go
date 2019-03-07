@@ -14,81 +14,71 @@
 
 package controlplane
 
-// import (
-// 	"context"
-// 	"time"
+import (
+	"context"
 
-// 	"github.com/go-logr/logr"
-// 	"github.com/juan-lee/genesys/pkg/actuator/provider"
-// 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-// 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-// )
+	"github.com/go-logr/logr"
+	"github.com/juan-lee/genesys/pkg/actuator/provider"
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+)
 
-// type SingleInstance struct {
-// 	log logr.Logger
-// 	cpe provider.ControlPlaneEndpointFactory
-// }
+type SingleInstance struct {
+	log      logr.Logger
+	provider provider.Interface
+}
 
-// func ProvideSingleInstance(log logr.Logger, cpe provider.ControlPlaneEndpointFactory) (*SingleInstance, error) {
-// 	return &SingleInstance{
-// 		log: log,
-// 		cpe: cpe,
-// 	}, nil
-// }
+func ProvideSingleInstance(log logr.Logger, cloud *v1alpha1.Cloud, provider provider.Interface) (*SingleInstance, error) {
+	return &SingleInstance{log: log, provider: provider}, nil
+}
 
-// func (r *SingleInstance) Ensure(ctx context.Context, cp *v1alpha1.ControlPlane) (reconcile.Result, error) {
-// 	r.log.Info("controlplane.EnsureDeleted enter")
-// 	defer r.log.Info("controlplane.EnsureDeleted exit")
+func (b *SingleInstance) Ensure(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.ensureControlPlaneEndpoint(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-// 	if err := validate(cp); err != nil {
-// 		return reconcile.Result{}, err
-// 	}
+func (b *SingleInstance) EnsureDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.ensureControlPlaneEndpointDeleted(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-// 	rec, err := r.cpe.Get(ctx, cp)
-// 	if err != nil {
-// 		return reconcile.Result{}, err
-// 	}
+func (b *SingleInstance) ensureControlPlaneEndpoint(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, exists := b.provider.ControlPlaneEndpoint(); exists {
+		if hasEndpoint, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && hasEndpoint {
+			if err := cpe.UpdateControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
 
-// 	if err := rec.Ensure(ctx); err != nil {
-// 		switch err.(type) {
-// 		case *provider.ProvisioningInProgress:
-// 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-// 		}
-// 		return reconcile.Result{}, err
-// 	}
-// 	return reconcile.Result{}, nil
-// }
+		err := cpe.EnsureControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
 
-// func (r *SingleInstance) EnsureDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) (reconcile.Result, error) {
-// 	r.log.Info("controlplane.EnsureDeleted enter")
-// 	defer r.log.Info("controlplane.EnsureDeleted exit")
+func (b *SingleInstance) ensureControlPlaneEndpointDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, exists := b.provider.ControlPlaneEndpoint(); exists {
+		if hasEndpoint, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && hasEndpoint {
+			if err := cpe.EnsureControlPlaneEndpointDeleted(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
 
-// 	rec, err := r.cpe.Get(ctx, cp)
-// 	if err != nil {
-// 		return reconcile.Result{}, err
-// 	}
-
-// 	if err := rec.EnsureDeleted(ctx); err != nil {
-// 		switch err.(type) {
-// 		case *provider.ProvisioningInProgress:
-// 			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
-// 		}
-// 		return reconcile.Result{}, err
-// 	}
-// 	return reconcile.Result{}, nil
-// }
-
-// func (r *SingleInstance) ensureAll(ctx context.Context, cp *v1alpha1.ControlPlane) error {
-// 	if err := r.ensureControlPlaneEndpoint(ctx, cp); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
-// func (r *SingleInstance) ensureControlPlaneEndpoint(ctx context.Context, cp *v1alpha1.ControlPlane) error {
-// 	return nil
-// }
-
-// func validate(cp *v1alpha1.ControlPlane) error {
-// 	return nil
-// }
+		return nil
+	}
+	return nil
+}

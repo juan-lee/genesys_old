@@ -22,12 +22,14 @@ import (
 )
 
 var _ provider.Interface = (*Provider)(nil)
+var _ provider.ControlPlaneEndpoint = (*Provider)(nil)
 var _ provider.VirtualNetwork = (*Provider)(nil)
 
 type client struct {
 	vnet network.VirtualNetworksClient
 	nsg  network.SecurityGroupsClient
 	rt   network.RouteTablesClient
+	pip  network.PublicIPAddressesClient
 }
 
 type Provider struct {
@@ -39,6 +41,10 @@ type Provider struct {
 
 func NewProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
 	return injectProvider(cloud)
+}
+
+func (p *Provider) ControlPlaneEndpoint() (provider.ControlPlaneEndpoint, bool) {
+	return p, true
 }
 
 func (p *Provider) VirtualNetwork() (provider.VirtualNetwork, bool) {
