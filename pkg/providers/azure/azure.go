@@ -19,23 +19,33 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/cluster"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
-	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
 var _ provider.Interface = (*Provider)(nil)
+var _ provider.VirtualNetwork = (*Provider)(nil)
+
+type client struct {
+	vnet network.VirtualNetworksClient
+	nsg  network.SecurityGroupsClient
+	rt   network.RouteTablesClient
+}
 
 type Provider struct {
-	log        logr.Logger
-	config     *v1alpha1.Cloud
-	names      *names
-	vnetClient network.VirtualNetworksClient
+	log    logr.Logger
+	config *v1alpha1.Cloud
+	names  *names
+	client *client
+}
+
+func NewProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
+	return injectProvider(cloud)
 }
 
 func (p *Provider) VirtualNetwork() (provider.VirtualNetwork, bool) {
 	return p, true
 }
 
-func NewSelfManaged(log logr.Logger, c *k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
+func NewSelfManaged(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	return InjectCluster(log, c)
 }

@@ -17,11 +17,12 @@ import (
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // Injectors from inject_azure.go:
 
-func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
+func InjectCluster(log logr.Logger, cloud *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
 	configuration, err := provideConfiguration()
 	if err != nil {
 		return nil, err
@@ -30,8 +31,8 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 	if err != nil {
 		return nil, err
 	}
-	azureNames := providePrefixedNames(c)
-	azureVirtualNetworkFactory, err := provideVirtualNetworkFactory(log, authorizer, c, azureNames)
+	azureNames := provideNames(cloud)
+	azureVirtualNetworkFactory, err := provideVirtualNetworkFactory(log, authorizer, cloud, azureNames)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +40,7 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 	if err != nil {
 		return nil, err
 	}
-	azureControlPlaneEndpointFactory, err := provideControlPlaneEndpointFactory(log, authorizer, c, azureNames)
+	azureControlPlaneEndpointFactory, err := provideControlPlaneEndpointFactory(log, authorizer, cloud, azureNames)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,31 @@ func InjectCluster(log logr.Logger, c *v1alpha1.Cloud) (*cluster.SelfManaged, er
 	return selfManaged, nil
 }
 
+func injectProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
+	logger, err := provideLogger()
+	if err != nil {
+		return nil, err
+	}
+	azureNames := provideNames(cloud)
+	configuration, err := provideConfiguration()
+	if err != nil {
+		return nil, err
+	}
+	authorizer, err := provideAuthorizer(logger, configuration)
+	if err != nil {
+		return nil, err
+	}
+	azureClient, err := provideClient(logger, cloud, authorizer)
+	if err != nil {
+		return nil, err
+	}
+	provider, err := setupProvider(logger, cloud, azureNames, azureClient)
+	if err != nil {
+		return nil, err
+	}
+	return provider, nil
+}
+
 // inject_azure.go:
 
 var cpSet = wire.NewSet(
@@ -64,6 +90,43 @@ var netSet = wire.NewSet(
 	provideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
 )
 
+func provideLogger() (logr.Logger, error) {
+	return log.Log.WithName("azure.provider"), nil
+}
+
+func provideClient(log2 logr.Logger, cloud *v1alpha1.Cloud, a autorest.Authorizer) (*client, error) {
+	vnet, err := newVNETClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	nsg, err := newNSGClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	rt, err := newRouteTableClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	return &client{
+		vnet: vnet,
+		nsg:  nsg,
+		rt:   rt,
+	}, nil
+}
+
+func setupProvider(log2 logr.Logger, cloud *v1alpha1.Cloud, names2 *names, client2 *client) (*Provider, error) {
+	return &Provider{
+		log:    log2,
+		config: cloud,
+		names:  names2,
+		client: client2,
+	}, nil
+}
+
+func provideNames(cloud *v1alpha1.Cloud) *names {
+	return &names{prefix: cloud.ResourceGroup}
+}
+
 func provideConfiguration() (*Configuration, error) {
 	return &Configuration{
 		Cloud:        "AzurePublicCloud",
@@ -73,18 +136,18 @@ func provideConfiguration() (*Configuration, error) {
 	}, nil
 }
 
-func provideAuthorizer(log logr.Logger, c *Configuration) (autorest.Authorizer, error) {
-	env, err := azure.EnvironmentFromName(c.Cloud)
+func provideAuthorizer(log2 logr.Logger, config *Configuration) (autorest.Authorizer, error) {
+	env, err := azure.EnvironmentFromName(config.Cloud)
 	if err != nil {
 		return nil, err
 	}
 	oauthConfig, err := adal.NewOAuthConfig(
-		env.ActiveDirectoryEndpoint, c.TenantID)
+		env.ActiveDirectoryEndpoint, config.TenantID)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := adal.NewServicePrincipalToken(*oauthConfig, c.ClientID, c.ClientSecret, env.ResourceManagerEndpoint)
+	token, err := adal.NewServicePrincipalToken(*oauthConfig, config.ClientID, config.ClientSecret, env.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}

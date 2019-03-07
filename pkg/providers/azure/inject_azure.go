@@ -27,19 +27,9 @@ import (
 	"github.com/juan-lee/genesys/pkg/actuator/cluster"
 	"github.com/juan-lee/genesys/pkg/actuator/profile"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
-	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
-
-func InjectCluster(log logr.Logger, c *k8sv1alpha1.Cloud) (*cluster.SelfManaged, error) {
-	panic(wire.Build(
-		providePrefixedNames,
-		provideConfiguration,
-		provideAuthorizer,
-		cpSet,
-		netSet,
-		profile.SelfManaged,
-	))
-}
 
 var cpSet = wire.NewSet(
 	provideControlPlaneEndpointFactory,
@@ -51,6 +41,65 @@ var netSet = wire.NewSet(
 	wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
 )
 
+func InjectCluster(log logr.Logger, cloud *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
+	panic(wire.Build(
+		provideNames,
+		provideConfiguration,
+		provideAuthorizer,
+		cpSet,
+		netSet,
+		profile.SelfManaged,
+	))
+}
+
+func injectProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
+	panic(wire.Build(
+		provideLogger,
+		provideNames,
+		provideConfiguration,
+		provideAuthorizer,
+		provideClient,
+		setupProvider,
+	))
+}
+
+func provideLogger() (logr.Logger, error) {
+	return logf.Log.WithName("azure.provider"), nil
+}
+
+func provideClient(log logr.Logger, cloud *v1alpha1.Cloud, a autorest.Authorizer) (*client, error) {
+	vnet, err := newVNETClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	nsg, err := newNSGClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	rt, err := newRouteTableClient(cloud.SubscriptionID, a)
+	if err != nil {
+		return nil, err
+	}
+	return &client{
+		vnet: vnet,
+		nsg:  nsg,
+		rt:   rt,
+	}, nil
+}
+
+func setupProvider(log logr.Logger, cloud *v1alpha1.Cloud, names *names, client *client) (*Provider, error) {
+	return &Provider{
+		log:    log,
+		config: cloud,
+		names:  names,
+		client: client,
+	}, nil
+}
+
+func provideNames(cloud *v1alpha1.Cloud) *names {
+	return &names{prefix: cloud.ResourceGroup}
+}
+
 func provideConfiguration() (*Configuration, error) {
 	return &Configuration{
 		Cloud:        "AzurePublicCloud",
@@ -60,18 +109,18 @@ func provideConfiguration() (*Configuration, error) {
 	}, nil
 }
 
-func provideAuthorizer(log logr.Logger, c *Configuration) (autorest.Authorizer, error) {
-	env, err := azure.EnvironmentFromName(c.Cloud)
+func provideAuthorizer(log logr.Logger, config *Configuration) (autorest.Authorizer, error) {
+	env, err := azure.EnvironmentFromName(config.Cloud)
 	if err != nil {
 		return nil, err
 	}
 	oauthConfig, err := adal.NewOAuthConfig(
-		env.ActiveDirectoryEndpoint, c.TenantID)
+		env.ActiveDirectoryEndpoint, config.TenantID)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := adal.NewServicePrincipalToken(*oauthConfig, c.ClientID, c.ClientSecret, env.ResourceManagerEndpoint)
+	token, err := adal.NewServicePrincipalToken(*oauthConfig, config.ClientID, config.ClientSecret, env.ResourceManagerEndpoint)
 	if err != nil {
 		return nil, err
 	}

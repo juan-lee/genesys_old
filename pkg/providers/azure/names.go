@@ -16,16 +16,10 @@ package azure
 
 import (
 	"fmt"
-
-	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
 
 type names struct {
 	prefix string
-}
-
-func providePrefixedNames(c *v1alpha1.Cloud) *names {
-	return &names{prefix: c.ResourceGroup}
 }
 
 func (n names) VirtualNetwork() string {
