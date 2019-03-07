@@ -17,8 +17,8 @@ package cluster
 import (
 	"context"
 
+	"github.com/juan-lee/genesys/pkg/actuator/bootstrap"
 	k8sv1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"github.com/juan-lee/genesys/pkg/providers/azure"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -91,14 +91,14 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	cluster, err := azure.NewSelfManaged(log, &instance.Spec.Cloud)
+	cluster, err := bootstrap.New(&instance.Spec.Cloud)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	result, err := cluster.Ensure(context.TODO(), *instance)
+	err = cluster.Ensure(context.TODO(), instance)
 	if err != nil {
-		return result, err
+		return reconcile.Result{}, err
 	}
 
 	return reconcile.Result{}, nil

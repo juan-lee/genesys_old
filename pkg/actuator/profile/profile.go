@@ -14,15 +14,15 @@
 
 package profile
 
-import (
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
-	"github.com/juan-lee/genesys/pkg/actuator/network"
-)
+// import (
+// 	"github.com/google/wire"
+// 	"github.com/juan-lee/genesys/pkg/actuator/cluster"
+// 	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
+// 	"github.com/juan-lee/genesys/pkg/actuator/network"
+// )
 
-var SelfManaged = wire.NewSet(
-	controlplane.ProvideSingleInstance,
-	network.ProvideFlatNetwork,
-	cluster.ProvideSelfManaged,
-)
+// var SelfManaged = wire.NewSet(
+// 	controlplane.ProvideSingleInstance,
+// 	network.ProvideFlatNetwork,
+// 	cluster.ProvideSelfManaged,
+// )

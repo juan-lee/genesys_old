@@ -16,50 +16,9 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 )
-
-var (
-	ErrNotFound = errors.New("resource not found")
-)
-
-type Status string
-
-const (
-	NeedsUpdate  Status = "NeedsUpdate"
-	Succeeded    Status = "Succeeded"
-	Provisioning Status = "Provisioning"
-	Deleting     Status = "Deleting"
-	Deleted      Status = "Deleted"
-	Unknown      Status = "Unknown"
-)
-
-type Provider interface {
-	Exists() bool
-	Status() Status
-	Update(ctx context.Context) error
-	Delete(ctx context.Context) error
-}
-
-type Reconciler interface {
-	Ensure(ctx context.Context) error
-	EnsureDeleted(ctx context.Context) error
-}
-
-type ControlPlaneEndpointFactory interface {
-	Get(ctx context.Context, cp *v1alpha1.ControlPlane) (Reconciler, error)
-}
-
-type VirtualNetworkFactory interface {
-	Get(ctx context.Context, net *v1alpha1.Network) (Reconciler, error)
-}
-
-type NetworkSecurityGroup interface {
-	Ensure(ctx context.Context, net v1alpha1.Network) error
-	EnsureDeleted(ctx context.Context, net v1alpha1.Network) error
-}
 
 type VirtualNetwork interface {
 	GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network) (exists bool, err error)

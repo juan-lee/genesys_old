@@ -14,44 +14,34 @@
 
 package azure
 
-import (
-	"context"
+// var _ provider.NetworkSecurityGroup = &NetworkSecurityGroup{}
 
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/go-logr/logr"
-	"github.com/juan-lee/genesys/pkg/actuator/provider"
-	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-)
+// type NetworkSecurityGroup struct {
+// 	log    logr.Logger
+// 	config v1alpha1.Cloud
+// 	names  *names
+// 	client network.SecurityGroupsClient
+// }
 
-var _ provider.NetworkSecurityGroup = &NetworkSecurityGroup{}
+// func ProvideNetworkSecurityGroup(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*NetworkSecurityGroup, error) {
+// 	client, err := newNSGClient(c.SubscriptionID, a)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &NetworkSecurityGroup{
+// 		log:    log,
+// 		config: c,
+// 		names:  n,
+// 		client: client,
+// 	}, nil
+// }
 
-type NetworkSecurityGroup struct {
-	log    logr.Logger
-	config v1alpha1.Cloud
-	names  *names
-	client network.SecurityGroupsClient
-}
+// func (r *NetworkSecurityGroup) Ensure(ctx context.Context, net v1alpha1.Network) error {
+// 	// TODO
+// 	return nil
+// }
 
-func ProvideNetworkSecurityGroup(log logr.Logger, a autorest.Authorizer, c v1alpha1.Cloud, n *names) (*NetworkSecurityGroup, error) {
-	client, err := newNSGClient(c.SubscriptionID, a)
-	if err != nil {
-		return nil, err
-	}
-	return &NetworkSecurityGroup{
-		log:    log,
-		config: c,
-		names:  n,
-		client: client,
-	}, nil
-}
-
-func (r *NetworkSecurityGroup) Ensure(ctx context.Context, net v1alpha1.Network) error {
-	// TODO
-	return nil
-}
-
-func (r *NetworkSecurityGroup) EnsureDeleted(ctx context.Context, net v1alpha1.Network) error {
-	// TODO
-	return nil
-}
+// func (r *NetworkSecurityGroup) EnsureDeleted(ctx context.Context, net v1alpha1.Network) error {
+// 	// TODO
+// 	return nil
+// }

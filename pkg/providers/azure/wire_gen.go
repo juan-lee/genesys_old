@@ -10,50 +10,12 @@ import (
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/go-logr/logr"
-	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/controlplane"
-	"github.com/juan-lee/genesys/pkg/actuator/network"
-	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	"github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 // Injectors from inject_azure.go:
-
-func InjectCluster(log logr.Logger, cloud *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
-	configuration, err := provideConfiguration()
-	if err != nil {
-		return nil, err
-	}
-	authorizer, err := provideAuthorizer(log, configuration)
-	if err != nil {
-		return nil, err
-	}
-	azureNames := provideNames(cloud)
-	azureVirtualNetworkFactory, err := provideVirtualNetworkFactory(log, authorizer, cloud, azureNames)
-	if err != nil {
-		return nil, err
-	}
-	flat, err := network.ProvideFlatNetwork(log, azureVirtualNetworkFactory)
-	if err != nil {
-		return nil, err
-	}
-	azureControlPlaneEndpointFactory, err := provideControlPlaneEndpointFactory(log, authorizer, cloud, azureNames)
-	if err != nil {
-		return nil, err
-	}
-	singleInstance, err := controlplane.ProvideSingleInstance(log, azureControlPlaneEndpointFactory)
-	if err != nil {
-		return nil, err
-	}
-	selfManaged, err := cluster.ProvideSelfManaged(log, flat, singleInstance)
-	if err != nil {
-		return nil, err
-	}
-	return selfManaged, nil
-}
 
 func injectProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
 	logger, err := provideLogger()
@@ -81,14 +43,6 @@ func injectProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
 }
 
 // inject_azure.go:
-
-var cpSet = wire.NewSet(
-	provideControlPlaneEndpointFactory, wire.Bind(new(provider.ControlPlaneEndpointFactory), new(controlPlaneEndpointFactory)),
-)
-
-var netSet = wire.NewSet(
-	provideVirtualNetworkFactory, wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
-)
 
 func provideLogger() (logr.Logger, error) {
 	return log.Log.WithName("azure.provider"), nil

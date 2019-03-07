@@ -12,35 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package azure
+//+build wireinject
+
+package bootstrap
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-01-01/network"
 	"github.com/go-logr/logr"
+	"github.com/google/wire"
+	"github.com/juan-lee/genesys/pkg/actuator/network"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
+	"github.com/juan-lee/genesys/pkg/providers/azure"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-var _ provider.Interface = (*Provider)(nil)
-var _ provider.VirtualNetwork = (*Provider)(nil)
-
-type client struct {
-	vnet network.VirtualNetworksClient
-	nsg  network.SecurityGroupsClient
-	rt   network.RouteTablesClient
+func injectBootstrap(cloud *v1alpha1.Cloud) (*Bootstrap, error) {
+	panic(wire.Build(
+		provideLogger,
+		setupAzureProvider,
+		network.ProvideFlat,
+		provideBootstrap,
+	))
 }
 
-type Provider struct {
-	log    logr.Logger
-	config *v1alpha1.Cloud
-	names  *names
-	client *client
+func provideLogger() (logr.Logger, error) {
+	return logf.Log.WithName("actuator.bootstrap"), nil
 }
 
-func NewProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
-	return injectProvider(cloud)
+func setupAzureProvider(log logr.Logger, cloud *v1alpha1.Cloud) (provider.Interface, error) {
+	return azure.NewProvider(cloud)
 }
 
-func (p *Provider) VirtualNetwork() (provider.VirtualNetwork, bool) {
-	return p, true
+func provideBootstrap(log logr.Logger, net *network.Flat) (*Bootstrap, error) {
+	return &Bootstrap{log: log, net: net}, nil
 }

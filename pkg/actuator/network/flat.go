@@ -16,63 +16,69 @@ package network
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Flat struct {
-	log  logr.Logger
-	vnet provider.VirtualNetworkFactory
+	log      logr.Logger
+	provider provider.Interface
 }
 
-func ProvideFlatNetwork(log logr.Logger, vnet provider.VirtualNetworkFactory) (*Flat, error) {
-	return &Flat{
-		log:  log,
-		vnet: vnet,
-	}, nil
+func ProvideFlat(log logr.Logger, cloud *v1alpha1.Cloud, provider provider.Interface) (*Flat, error) {
+	return &Flat{log: log, provider: provider}, nil
 }
 
-func (r *Flat) Ensure(ctx context.Context, net *v1alpha1.Network) (reconcile.Result, error) {
-	r.log.Info("network.Update enter")
-	defer r.log.Info("network.Update exit")
-
-	if err := validateVirtualNetwork(net); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	rec, err := r.vnet.Get(ctx, net)
+func (b *Flat) Ensure(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.ensureVNet(ctx, cluster)
 	if err != nil {
-		return reconcile.Result{}, err
+		return err
 	}
+	return nil
+}
 
-	if err := rec.Ensure(ctx); err != nil {
-		switch err.(type) {
-		case *provider.ProvisioningInProgress:
-			return reconcile.Result{Requeue: true, RequeueAfter: 30 * time.Second}, nil
+func (b *Flat) EnsureDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	err := b.ensureVNetDeleted(ctx, cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Flat) ensureVNet(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if vnet, exists := b.provider.VirtualNetwork(); exists {
+		if hasVNet, err := vnet.GetVirtualNetwork(ctx, &cluster.Spec.Network); err != nil && hasVNet {
+			if err := vnet.UpdateVirtualNetwork(ctx, &cluster.Spec.Network); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
 		}
-		return reconcile.Result{}, err
+
+		err := vnet.EnsureVirtualNetwork(ctx, &cluster.Spec.Network)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return reconcile.Result{}, nil
+	return nil
 }
 
-func (r *Flat) EnsureDeleted(ctx context.Context, net *v1alpha1.Network) (reconcile.Result, error) {
-	// TODO
-	return reconcile.Result{}, nil
-}
+func (b *Flat) ensureVNetDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if vnet, exists := b.provider.VirtualNetwork(); exists {
+		if hasVNet, err := vnet.GetVirtualNetwork(ctx, &cluster.Spec.Network); err != nil && hasVNet {
+			if err := vnet.EnsureVirtualNetworkDeleted(ctx, &cluster.Spec.Network); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
 
-func validateVirtualNetwork(net *v1alpha1.Network) error {
-	if net.CIDR == "" {
-		return errors.New("CIDR cannot be empty")
+		return nil
 	}
-
-	if net.SubnetCIDR == "" {
-		return errors.New("SubnetCIDR cannot be empty")
-	}
-
 	return nil
 }

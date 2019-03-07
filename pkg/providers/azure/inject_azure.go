@@ -24,33 +24,9 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/go-logr/logr"
 	"github.com/google/wire"
-	"github.com/juan-lee/genesys/pkg/actuator/cluster"
-	"github.com/juan-lee/genesys/pkg/actuator/profile"
-	"github.com/juan-lee/genesys/pkg/actuator/provider"
 	v1alpha1 "github.com/juan-lee/genesys/pkg/apis/kubernetes/v1alpha1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
-
-var cpSet = wire.NewSet(
-	provideControlPlaneEndpointFactory,
-	wire.Bind(new(provider.ControlPlaneEndpointFactory), new(controlPlaneEndpointFactory)),
-)
-
-var netSet = wire.NewSet(
-	provideVirtualNetworkFactory,
-	wire.Bind(new(provider.VirtualNetworkFactory), new(virtualNetworkFactory)),
-)
-
-func InjectCluster(log logr.Logger, cloud *v1alpha1.Cloud) (*cluster.SelfManaged, error) {
-	panic(wire.Build(
-		provideNames,
-		provideConfiguration,
-		provideAuthorizer,
-		cpSet,
-		netSet,
-		profile.SelfManaged,
-	))
-}
 
 func injectProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
 	panic(wire.Build(
