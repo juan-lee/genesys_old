@@ -24,6 +24,8 @@ import (
 var _ provider.Interface = (*Provider)(nil)
 var _ provider.ControlPlaneEndpoint = (*Provider)(nil)
 var _ provider.VirtualNetwork = (*Provider)(nil)
+var _ provider.ExternalLoadBalancer = (*Provider)(nil)
+var _ provider.InternalLoadBalancer = (*Provider)(nil)
 
 type client struct {
 	vnet network.VirtualNetworksClient
@@ -44,6 +46,14 @@ func NewProvider(cloud *v1alpha1.Cloud) (*Provider, error) {
 }
 
 func (p *Provider) ControlPlaneEndpoint() (provider.ControlPlaneEndpoint, bool) {
+	return p, true
+}
+
+func (p *Provider) ExternalLoadBalancer() (provider.ExternalLoadBalancer, bool) {
+	return p, true
+}
+
+func (p *Provider) InternalLoadBalancer() (provider.InternalLoadBalancer, bool) {
 	return p, true
 }
 

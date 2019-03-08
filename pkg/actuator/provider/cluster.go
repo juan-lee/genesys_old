@@ -27,6 +27,20 @@ type ControlPlaneEndpoint interface {
 	EnsureControlPlaneEndpointDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) error
 }
 
+type ExternalLoadBalancer interface {
+	GetExternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) (exists bool, err error)
+	EnsureExternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	UpdateExternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	EnsureExternalLoadBalancerDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) error
+}
+
+type InternalLoadBalancer interface {
+	GetInternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) (exists bool, err error)
+	EnsureInternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	UpdateInternalLoadBalancer(ctx context.Context, cp *v1alpha1.ControlPlane) error
+	EnsureInternalLoadBalancerDeleted(ctx context.Context, cp *v1alpha1.ControlPlane) error
+}
+
 type VirtualNetwork interface {
 	GetVirtualNetwork(ctx context.Context, net *v1alpha1.Network) (exists bool, err error)
 	EnsureVirtualNetwork(ctx context.Context, net *v1alpha1.Network) error
@@ -37,4 +51,6 @@ type VirtualNetwork interface {
 type Interface interface {
 	VirtualNetwork() (VirtualNetwork, bool)
 	ControlPlaneEndpoint() (ControlPlaneEndpoint, bool)
+	ExternalLoadBalancer() (ExternalLoadBalancer, bool)
+	InternalLoadBalancer() (InternalLoadBalancer, bool)
 }

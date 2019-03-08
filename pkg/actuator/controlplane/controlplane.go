@@ -36,6 +36,16 @@ func (b *SingleInstance) Ensure(ctx context.Context, cluster *v1alpha1.Cluster) 
 	if err != nil {
 		return err
 	}
+
+	err := b.ensureExternalLoadBalancer(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	err := b.ensureInternalLoadBalancer(ctx, cluster)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -44,12 +54,22 @@ func (b *SingleInstance) EnsureDeleted(ctx context.Context, cluster *v1alpha1.Cl
 	if err != nil {
 		return err
 	}
+
+	err := b.ensureExternalLoadBalancerDeleted(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	err := b.ensureInternalLoadBalancerDeleted(ctx, cluster)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (b *SingleInstance) ensureControlPlaneEndpoint(ctx context.Context, cluster *v1alpha1.Cluster) error {
-	if cpe, exists := b.provider.ControlPlaneEndpoint(); exists {
-		if hasEndpoint, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && hasEndpoint {
+	if cpe, supported := b.provider.ControlPlaneEndpoint(); supported {
+		if exists, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
 			if err := cpe.UpdateControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil {
 				return err
 			}
@@ -68,9 +88,81 @@ func (b *SingleInstance) ensureControlPlaneEndpoint(ctx context.Context, cluster
 }
 
 func (b *SingleInstance) ensureControlPlaneEndpointDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
-	if cpe, exists := b.provider.ControlPlaneEndpoint(); exists {
-		if hasEndpoint, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && hasEndpoint {
+	if cpe, supported := b.provider.ControlPlaneEndpoint(); supported {
+		if exists, err := cpe.GetControlPlaneEndpoint(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
 			if err := cpe.EnsureControlPlaneEndpointDeleted(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return nil
+}
+
+func (b *SingleInstance) ensureExternalLoadBalancer(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, supported := b.provider.ExternalLoadBalancer(); supported {
+		if exists, err := cpe.GetExternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
+			if err := cpe.UpdateExternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		err := cpe.EnsureExternalLoadBalancer(ctx, &cluster.Spec.ControlPlane)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
+
+func (b *SingleInstance) ensureExternalLoadBalancerDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, supported := b.provider.ExternalLoadBalancer(); supported {
+		if exists, err := cpe.GetExternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
+			if err := cpe.EnsureExternalLoadBalancerDeleted(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		return nil
+	}
+	return nil
+}
+
+func (b *SingleInstance) ensureInternalLoadBalancer(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, supported := b.provider.InternalLoadBalancer(); supported {
+		if exists, err := cpe.GetInternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
+			if err := cpe.UpdateInternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil {
+				return err
+			}
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		err := cpe.EnsureInternalLoadBalancer(ctx, &cluster.Spec.ControlPlane)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
+
+func (b *SingleInstance) ensureInternalLoadBalancerDeleted(ctx context.Context, cluster *v1alpha1.Cluster) error {
+	if cpe, supported := b.provider.InternalLoadBalancer(); supported {
+		if exists, err := cpe.GetInternalLoadBalancer(ctx, &cluster.Spec.ControlPlane); err != nil && exists {
+			if err := cpe.EnsureInternalLoadBalancerDeleted(ctx, &cluster.Spec.ControlPlane); err != nil {
 				return err
 			}
 			return nil
