@@ -1,0 +1,14 @@
+apiVersion: kubernetes.azure.com/v1alpha1
+kind: Cluster
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: cluster-sample
+spec:
+  cloud:
+    subscriptionID: <subscription_id>
+    resourceGroup: <resource_group>
+    location: <location>
+  network:
+    cidr: 10.0.0.0/8
+    subnetCIDR: 10.240.0.0/12
